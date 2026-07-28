@@ -101,24 +101,30 @@ Players never see an error.
 | `/msc demo <event>` | Admin: deterministic scripted story through the real pipeline |
 | `/msc stats` | Admin: fired/suppressed counts, AI budget, cache state |
 
-## The ten moments
+## The eleven moments
 
-`first_join` · `first_nightfall` · `eating_bread` · `taming` ·
-`low_health_survival` · `found_diamonds` · `player_death` → presented at respawn ·
+`first_join` · `first_nightfall` · `survived_the_night` (dawn, if something came
+after you) · `eating_bread` · `taming` · `low_health_survival` (three hearts or
+less, still standing) · `found_diamonds` · `player_death` → presented at respawn ·
 `sleep` · `thunderstorm` · `fellowship` (two players near each other for a minute)
 
 ## Sacred, not spammy
 
 A verse that arrives too often stops being a moment. Every candidate passes
-milestone flags, per-event debounce, per-event and global cooldowns, a session
-cap, a death-spam guard, and an unchanged-story check before an AI call is even
-considered — and then an explicit budget gate (10 per player per hour, 100 per
-server per hour). Over budget, only the rarest moments still reach the AI;
-everything else serves from cache or the curated pool.
+milestone flags, per-event debounce, per-event and global cooldowns, and a
+session cap before an AI call is even considered — and then an explicit budget
+gate (10 per player per hour, 100 per server per hour). Over budget, only the
+rarest moments still reach the AI; everything else serves from cache or the
+curated pool.
 
 The ordering matters: a player idling in a mob farm generates hundreds of
 near-death events, and cooldowns retire them long before they can drain the
 hourly AI allowance meant for the moment that actually matters.
+
+Restraint here means pacing, never silence. A run of quick deaths widens the gap
+each time — 60s, then 105s, then 184s, capped at five minutes and reset after ten
+quiet ones — and repeats keep their verse but lose the title treatment. A player
+having a terrible night is still spoken to; they just aren't spoken over.
 
 ## Privacy
 

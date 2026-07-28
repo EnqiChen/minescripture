@@ -205,9 +205,9 @@ public final class AdminCommand implements TabExecutor {
                     .filter(s -> s.startsWith(args[0].toLowerCase(Locale.ROOT))).toList();
         }
         if (args.length == 2 && ("trigger".equalsIgnoreCase(args[0]) || "demo".equalsIgnoreCase(args[0]))) {
-            return List.of("first_join", "first_nightfall", "eating_bread", "taming",
-                            "low_health_survival", "found_diamonds", "player_death", "sleep",
-                            "thunderstorm", "fellowship").stream()
+            return List.of("first_join", "first_nightfall", "survived_the_night", "eating_bread",
+                            "taming", "low_health_survival", "found_diamonds", "player_death",
+                            "sleep", "thunderstorm", "fellowship").stream()
                     .filter(s -> s.startsWith(args[1].toLowerCase(Locale.ROOT))).toList();
         }
         return List.of();

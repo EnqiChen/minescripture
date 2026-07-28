@@ -152,21 +152,30 @@ A verse that arrives too often stops being a moment and becomes a notification.
 Restraint is not a setting here; it is most of the code.
 
 Every candidate passes milestone flags, per-event debounce, per-event and global
-cooldowns, a session cap, a death-spam guard and an unchanged-story check before
-an AI call is even considered — and then an explicit budget gate of 10
-interpretations per player per hour and 100 per server per hour. Over budget,
-only the rarest moments still reach the AI; everything else serves from cache or
-the curated pool.
+cooldowns and a session cap before an AI call is even considered — and then an
+explicit budget gate of 10 interpretations per player per hour and 100 per server
+per hour. Over budget, only the rarest moments still reach the AI; everything
+else serves from cache or the curated pool.
+
+But restraint has to mean pacing rather than silence, and we learned that the
+hard way. An early version answered a run of quick deaths with a fifteen-minute
+blackout. Play-testing made the flaw obvious: a genuinely bad night — nine deaths
+in ten minutes, which is simply what exploring at night looks like — produced one
+verse and then nothing, and the silence read as the plugin having broken. Deaths
+now widen the gap each time instead: sixty seconds, then a hundred and five, then
+three minutes, capped at five and reset after ten quiet ones. Repeats keep their
+verse but lose the title treatment. A player having an awful night is still
+spoken to; they are simply not spoken over.
 
 The *ordering* is the interesting part. Minecraft players do strange things — one
 of the most common is standing in a mob grinder, taking damage every few seconds,
 while away from the keyboard. To a naive system, that is hundreds of near-death
 experiences. If the budget gate came first, twenty minutes of afk farming would
 consume the entire hourly allowance, and the player's real death that evening
-would get a generic verse. So cooldowns, repeat-collapsing and the
-unchanged-story check all run ahead of the budget guard. Mechanical repetition is
-retired long before it can cost a token, and it accumulates as an aggregate —
-*this player has taken forty hits* — rather than as forty separate moments.
+would get a generic verse. So cooldowns and repeat-collapsing both run ahead of
+the budget guard. Mechanical repetition is retired long before it can cost a
+token, and it accumulates as an aggregate — *this player has taken forty hits* —
+rather than as forty separate moments.
 
 The budget guard is the last line of defence, not the first. That ordering is
 also the philosophy: the question is never "can we afford this call," it is "does

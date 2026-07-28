@@ -19,16 +19,19 @@ public final class DeathListener implements Listener {
 
     private final TriggerService service;
     private final MomentPresenter momentPresenter;
+    private final DayCycleClock dayCycle;
 
-    public DeathListener(TriggerService service, MomentPresenter momentPresenter) {
+    public DeathListener(TriggerService service, MomentPresenter momentPresenter, DayCycleClock dayCycle) {
         this.service = service;
         this.momentPresenter = momentPresenter;
+        this.dayCycle = dayCycle;
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onDeath(PlayerDeathEvent event) {
         Player player = event.getEntity();
         String cause = Causes.classifyLastDamage(player);
+        dayCycle.noteDeath(player.getUniqueId()); // you did not survive this night
         if (!event.getKeepInventory() && !event.getDrops().isEmpty()) {
             service.story(player.getUniqueId()).markLostItems();
         }

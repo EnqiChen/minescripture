@@ -89,10 +89,20 @@ event's timestamp, so tests drive it with a fake clock.
 5. **repeat collapse** — mechanical repeats become aggregates, not moments
 6. **global cooldown** — a floor between any two presentations
 7. **session cap**
-8. **death-spam guard** — three deaths in five minutes suppresses for fifteen
-9. **unchanged-story check** — nothing new happened, so reuse the last reading
-10. **AI budget guard** — 10/player/hour, 100/server/hour; over budget, only
-    priority events still reach the AI
+8. **death pacing** — deaths in a quick run wait progressively longer (60s,
+   105s, 184s, capped at five minutes, reset after ten quiet ones). There is no
+   lockout: a bad night thins out but is never silenced.
+9. **AI budget guard** — 10/player/hour, 100/server/hour; over budget, only
+   priority events still reach the AI
+
+Priority moments (death, diamonds, first-times) use a shorter global floor than
+ordinary ones, so dying seconds after a discovery is still allowed to speak.
+
+An earlier design also carried an "unchanged story" check that skipped the AI
+when nothing new had entered the window. It was removed: a moment that fires is
+by definition new information, and the AFK protection it was meant to add is
+already provided by steps 3–5. Keeping it meant every moment following an
+interpretation was silently denied its own reading.
 
 Steps 3–9 all run *before* step 10. That ordering is the AFK-farm fix: a player
 parked in a mob grinder produces a near-death event every few seconds, and if the

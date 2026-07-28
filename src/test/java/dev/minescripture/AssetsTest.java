@@ -22,8 +22,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class AssetsTest {
 
     static final List<String> ALL_EVENTS = List.of(
-            "first_join", "first_nightfall", "eating_bread", "taming", "low_health_survival",
-            "found_diamonds", "player_death", "sleep", "thunderstorm", "fellowship");
+            "first_join", "first_nightfall", "survived_the_night", "eating_bread", "taming",
+            "low_health_survival", "found_diamonds", "player_death", "sleep", "thunderstorm",
+            "fellowship");
 
     static Reader resource(String name) {
         return new InputStreamReader(AssetsTest.class.getResourceAsStream(name), StandardCharsets.UTF_8);
@@ -38,8 +39,8 @@ class AssetsTest {
     }
 
     @Test
-    void fallbackPoolHasExactly40Verses() {
-        assertEquals(40, realPool().verses().size());
+    void fallbackPoolHasExactly43Verses() {
+        assertEquals(43, realPool().verses().size());
     }
 
     @Test
@@ -84,7 +85,7 @@ class AssetsTest {
     @Test
     void eventSpecsMatchThePlan() {
         EventSpecs specs = realSpecs();
-        assertEquals(10, specs.all().size());
+        assertEquals(11, specs.all().size());
         for (String event : ALL_EVENTS) {
             assertNotNull(specs.get(event), "missing spec " + event);
         }

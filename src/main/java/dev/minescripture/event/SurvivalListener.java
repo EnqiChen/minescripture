@@ -21,10 +21,15 @@ import java.util.Locale;
  */
 public final class SurvivalListener implements Listener {
 
-    private final TriggerService service;
+    /** Three hearts or less, and still standing. */
+    private static final double NEAR_DEATH_HEALTH = 6.0;
 
-    public SurvivalListener(TriggerService service) {
+    private final TriggerService service;
+    private final DayCycleClock dayCycle;
+
+    public SurvivalListener(TriggerService service, DayCycleClock dayCycle) {
         this.service = service;
+        this.dayCycle = dayCycle;
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -35,10 +40,13 @@ public final class SurvivalListener implements Listener {
         if (event.getFinalDamage() <= 0) {
             return;
         }
+        String cause = Causes.classify(event.getCause());
+        dayCycle.noteDamage(player, cause);
+
         double after = player.getHealth() - event.getFinalDamage();
-        if (after > 0 && after <= 4.0) {
+        if (after > 0 && after <= NEAR_DEATH_HEALTH) {
             service.submit(TriggerContext.of(player.getUniqueId(), "low_health_survival",
-                    System.currentTimeMillis()).withCause(Causes.classify(event.getCause())));
+                    System.currentTimeMillis()).withCause(cause));
         }
     }
 

@@ -10,7 +10,7 @@ import dev.minescripture.event.DeathListener;
 import dev.minescripture.event.FellowshipTracker;
 import dev.minescripture.event.LifecycleListener;
 import dev.minescripture.event.MilestoneListener;
-import dev.minescripture.event.NightfallClock;
+import dev.minescripture.event.DayCycleClock;
 import dev.minescripture.event.SurvivalListener;
 import dev.minescripture.event.WorldListener;
 import dev.minescripture.journal.SessionJournal;
@@ -108,12 +108,13 @@ public final class MineScripturePlugin extends JavaPlugin {
         moments.bindStories(service::story);
 
         PluginManager pm = getServer().getPluginManager();
+        DayCycleClock dayCycle = new DayCycleClock(service, playerState);
         pm.registerEvents(new LifecycleListener(this, service, journal, moments, dataDir), this);
-        pm.registerEvents(new DeathListener(service, moments), this);
-        pm.registerEvents(new SurvivalListener(service), this);
+        pm.registerEvents(new DeathListener(service, moments, dayCycle), this);
+        pm.registerEvents(new SurvivalListener(service, dayCycle), this);
         pm.registerEvents(new WorldListener(service), this);
         pm.registerEvents(new MilestoneListener(service), this);
-        Bukkit.getScheduler().runTaskTimer(this, new NightfallClock(service, playerState), 100L, 100L);
+        Bukkit.getScheduler().runTaskTimer(this, dayCycle, 100L, 100L);
         Bukkit.getScheduler().runTaskTimer(this, new FellowshipTracker(service), 200L, 200L);
 
         Objects.requireNonNull(getCommand("verse"))

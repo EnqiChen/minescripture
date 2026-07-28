@@ -7,6 +7,10 @@
     { "ref": "2CO.5.17",    "display": "2 Corinthians 5:17",  "events": ["first_join"],          "themes": ["renewal", "beginnings", "identity"],   "tone": "encouraging" },
     { "ref": "JOS.1.9",     "display": "Joshua 1:9",          "events": ["first_join"],          "themes": ["courage", "presence", "journey"],      "tone": "encouraging" },
 
+    { "ref": "PSA.30.5",      "display": "Psalm 30:5",        "events": ["survived_the_night"],  "themes": ["morning", "joy", "relief", "endurance"], "tone": "warm" },
+    { "ref": "PSA.143.8",     "display": "Psalm 143:8",       "events": ["survived_the_night"],  "themes": ["morning", "trust", "guidance"],        "tone": "calm" },
+    { "ref": "PSA.59.16",     "display": "Psalm 59:16",       "events": ["survived_the_night"],  "themes": ["morning", "strength", "refuge", "gratitude"], "tone": "encouraging" },
+
     { "ref": "PSA.4.8",       "display": "Psalm 4:8",         "events": ["first_nightfall", "sleep"], "themes": ["peace", "rest", "safety"],        "tone": "calm" },
     { "ref": "ISA.41.10",     "display": "Isaiah 41:10",      "events": ["first_nightfall"],     "themes": ["courage", "fear", "presence"],         "tone": "encouraging" },
     { "ref": "PSA.27.1",      "display": "Psalm 27:1",        "events": ["first_nightfall"],     "themes": ["light", "fear", "confidence"],         "tone": "encouraging" },
@@ -62,6 +66,11 @@
       "refs": ["PSA.27.1", "ISA.41.10", "PSA.139.11-12"],
       "frame": "The first night falls.",
       "interpretation": { "resonance": "fear", "emotional_arc": "darkness_to_trust", "emphasis": "courage", "tone": "encouraging" }
+    },
+    "survived_the_night": {
+      "refs": ["PSA.30.5", "PSA.59.16", "PSA.143.8"],
+      "frame": "You made it to morning.",
+      "interpretation": { "resonance": "endurance", "emotional_arc": "night_to_morning", "emphasis": "relief", "tone": "warm" }
     },
     "eating_bread": {
       "refs": ["MAT.6.11", "PSA.104.14-15", "JHN.6.35"],

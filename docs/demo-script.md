@@ -38,8 +38,12 @@ verse. Just the feeling of being small in a big dark world.
 
 **0:08–0:20 — the first verse.**
 Sunrise. They survived. Voiceover: *"Some moments in games stay with us."*
-The first verse arrives on the actionbar as the sun clears the horizon.
-Hold on it. Let it breathe. Do not cut early.
+As the sun clears the horizon the `survived_the_night` verse arrives —
+*"You made it to morning."* Hold on it. Let it breathe. Do not cut early.
+
+This beat only fires if something actually came after the player in the dark
+(a mob landed a hit) and they did **not** die. So the cold open needs a real
+scrap before dawn, not just a walk through an empty field.
 
 **0:20–0:35 — the death centerpiece.**
 Player deep underground, finds diamonds — the title beat fires. Seconds later,
