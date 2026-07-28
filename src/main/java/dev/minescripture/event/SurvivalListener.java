@@ -103,6 +103,8 @@ public final class SurvivalListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBedEnter(PlayerBedEnterEvent event) {
         if (event.getBedEnterResult() == PlayerBedEnterEvent.BedEnterResult.OK) {
+            // Sleeping skips the night rather than passing through it.
+            dayCycle.noteSlept(event.getPlayer().getUniqueId());
             service.submit(TriggerContext.of(event.getPlayer().getUniqueId(), "sleep",
                     System.currentTimeMillis()));
         }

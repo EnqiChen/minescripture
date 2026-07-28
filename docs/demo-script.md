@@ -41,9 +41,13 @@ Sunrise. They survived. Voiceover: *"Some moments in games stay with us."*
 As the sun clears the horizon the `survived_the_night` verse arrives —
 *"You made it to morning."* Hold on it. Let it breathe. Do not cut early.
 
-This beat only fires if something actually came after the player in the dark
-(a mob landed a hit) and they did **not** die. So the cold open needs a real
-scrap before dawn, not just a walk through an empty field.
+This beat needs the night to have come after the player — a mob landing a hit,
+or the player fighting one — and they must **not** die or sleep. So the cold open
+needs a real scrap before dawn.
+
+If they simply hide until morning, the quieter `sheltered_till_dawn` fires
+instead: an actionbar line about waiting for the light. Both are usable on
+camera; the fight version is the stronger opening.
 
 **0:20–0:35 — the death centerpiece.**
 Player deep underground, finds diamonds — the title beat fires. Seconds later,

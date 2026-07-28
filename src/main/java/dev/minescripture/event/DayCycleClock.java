@@ -40,6 +40,7 @@ public final class DayCycleClock implements Runnable {
     private final PlayerStateManager playerState;
     private final Map<String, Long> lastTimeByWorld = new HashMap<>();
     private final Set<UUID> survivedSomething = ConcurrentHashMap.newKeySet();
+    private final Set<UUID> presentInTheDark = ConcurrentHashMap.newKeySet();
 
     public DayCycleClock(TriggerService service, PlayerStateManager playerState) {
         this.service = service;
@@ -74,6 +75,7 @@ public final class DayCycleClock implements Runnable {
     void markIfNight(UUID playerId, long worldTime) {
         if (worldTime >= NIGHT_START) {
             survivedSomething.add(playerId);
+            presentInTheDark.add(playerId);
         }
     }
 
@@ -81,13 +83,23 @@ public final class DayCycleClock implements Runnable {
         return survivedSomething.contains(playerId);
     }
 
+    boolean wasPresentInTheDark(UUID playerId) {
+        return presentInTheDark.contains(playerId);
+    }
+
     /** Dying means you did not survive the night — the death has its own moment. */
     public void noteDeath(UUID playerId) {
-        survivedSomething.remove(playerId);
+        forget(playerId);
+    }
+
+    /** Sleeping is opting out of the night, not enduring it; /verse sleep covers that. */
+    public void noteSlept(UUID playerId) {
+        forget(playerId);
     }
 
     public void forget(UUID playerId) {
         survivedSomething.remove(playerId);
+        presentInTheDark.remove(playerId);
     }
 
     @Override
@@ -109,16 +121,27 @@ public final class DayCycleClock implements Runnable {
                 }
             }
 
+            // Simply being out there in the dark is its own kind of night.
+            if (now >= NIGHT_START) {
+                world.getPlayers().forEach(p -> presentInTheDark.add(p.getUniqueId()));
+            }
+
             if (crossedIntoDay(last, now)) {
                 for (Player player : world.getPlayers()) {
                     UUID id = player.getUniqueId();
-                    if (survivedSomething.remove(id)) {
+                    boolean fought = survivedSomething.contains(id);
+                    boolean waited = presentInTheDark.contains(id);
+                    if (fought) {
                         service.submit(TriggerContext.of(id, "survived_the_night",
+                                System.currentTimeMillis()));
+                    } else if (waited) {
+                        service.submit(TriggerContext.of(id, "sheltered_till_dawn",
                                 System.currentTimeMillis()));
                     }
                 }
                 // Anyone who logged off before dawn starts the next night clean.
                 survivedSomething.clear();
+                presentInTheDark.clear();
             }
         }
     }

@@ -4,6 +4,7 @@
     "first_join":          { "path": "predictable", "tier": "major",    "priority": true,  "cooldown_s": 0,    "once": "persistent" },
     "first_nightfall":     { "path": "predictable", "tier": "standard", "priority": true,  "cooldown_s": 0,    "once": "persistent" },
     "survived_the_night":  { "path": "predictable", "tier": "standard", "priority": false, "cooldown_s": 1200 },
+    "sheltered_till_dawn": { "path": "predictable", "tier": "minor",    "priority": false, "cooldown_s": 3600 },
     "eating_bread":        { "path": "predictable", "tier": "minor",    "priority": false, "cooldown_s": 1800 },
     "taming":              { "path": "predictable", "tier": "standard", "priority": false, "cooldown_s": 1800 },
     "low_health_survival": { "path": "sudden",      "tier": "standard", "priority": false, "cooldown_s": 600 },

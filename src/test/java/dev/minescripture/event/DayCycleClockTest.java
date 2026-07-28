@@ -53,6 +53,30 @@ class DayCycleClockTest {
     }
 
     @Test
+    void beingOutInTheDarkCountsAsWaitingEvenWithoutAFight() {
+        DayCycleClock c = clock();
+        c.markIfNight(P1, NIGHT);
+        assertTrue(c.wasPresentInTheDark(P1));
+    }
+
+    @Test
+    void sleepingOptsOutOfBothNightMoments() {
+        DayCycleClock c = clock();
+        c.noteDamage(P1, "mob", NIGHT);
+        c.noteSlept(P1);
+        assertFalse(c.hasSurvivedSomething(P1), "sleeping skips the night rather than passing through it");
+        assertFalse(c.wasPresentInTheDark(P1));
+    }
+
+    @Test
+    void dyingClearsTheWaitingFlagToo() {
+        DayCycleClock c = clock();
+        c.markIfNight(P1, NIGHT);
+        c.noteDeath(P1);
+        assertFalse(c.wasPresentInTheDark(P1), "you did not wait out a night you died in");
+    }
+
+    @Test
     void dyingMeansYouDidNotSurviveTheNight() {
         DayCycleClock c = clock();
         c.noteDamage(P1, "mob", NIGHT);

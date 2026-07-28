@@ -101,12 +101,18 @@ Players never see an error.
 | `/msc demo <event>` | Admin: deterministic scripted story through the real pipeline |
 | `/msc stats` | Admin: fired/suppressed counts, AI budget, cache state |
 
-## The eleven moments
+## The twelve moments
 
-`first_join` · `first_nightfall` · `survived_the_night` (dawn, if something came
-after you) · `eating_bread` · `taming` · `low_health_survival` (three hearts or
-less, still standing) · `found_diamonds` · `player_death` → presented at respawn ·
-`sleep` · `thunderstorm` · `fellowship` (two players near each other for a minute)
+`first_join` · `first_nightfall` · `survived_the_night` (dawn, if the night came
+after you) · `sheltered_till_dawn` (dawn, if you simply waited it out) ·
+`eating_bread` · `taming` · `low_health_survival` (three hearts or less, still
+standing) · `found_diamonds` · `player_death` → presented at respawn · `sleep` ·
+`thunderstorm` · `fellowship` (two players near each other for a minute)
+
+The two dawn moments are deliberately different beats. Fighting through the night
+is relief and deliverance; waiting it out in a hole is patience — *"my soul waits
+for the Lord more than watchmen wait for the morning"* — so they draw on separate
+verses, and the quieter one arrives on the actionbar and far less often.
 
 ## Sacred, not spammy
 

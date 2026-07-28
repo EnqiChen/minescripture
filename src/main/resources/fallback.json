@@ -11,6 +11,10 @@
     { "ref": "PSA.143.8",     "display": "Psalm 143:8",       "events": ["survived_the_night"],  "themes": ["morning", "trust", "guidance"],        "tone": "calm" },
     { "ref": "PSA.59.16",     "display": "Psalm 59:16",       "events": ["survived_the_night"],  "themes": ["morning", "strength", "refuge", "gratitude"], "tone": "encouraging" },
 
+    { "ref": "PSA.130.6",     "display": "Psalm 130:6",       "events": ["sheltered_till_dawn"], "themes": ["waiting", "morning", "hope", "watchfulness"], "tone": "calm" },
+    { "ref": "LAM.3.25",      "display": "Lamentations 3:25", "events": ["sheltered_till_dawn"], "themes": ["waiting", "patience", "goodness"],     "tone": "calm" },
+    { "ref": "ISA.40.31",     "display": "Isaiah 40:31",      "events": ["sheltered_till_dawn"], "themes": ["waiting", "strength", "renewal", "endurance"], "tone": "encouraging" },
+
     { "ref": "PSA.4.8",       "display": "Psalm 4:8",         "events": ["first_nightfall", "sleep"], "themes": ["peace", "rest", "safety"],        "tone": "calm" },
     { "ref": "ISA.41.10",     "display": "Isaiah 41:10",      "events": ["first_nightfall"],     "themes": ["courage", "fear", "presence"],         "tone": "encouraging" },
     { "ref": "PSA.27.1",      "display": "Psalm 27:1",        "events": ["first_nightfall"],     "themes": ["light", "fear", "confidence"],         "tone": "encouraging" },
@@ -71,6 +75,11 @@
       "refs": ["PSA.30.5", "PSA.59.16", "PSA.143.8"],
       "frame": "You made it to morning.",
       "interpretation": { "resonance": "endurance", "emotional_arc": "night_to_morning", "emphasis": "relief", "tone": "warm" }
+    },
+    "sheltered_till_dawn": {
+      "refs": ["PSA.130.6", "LAM.3.25", "ISA.40.31"],
+      "frame": "You waited out the dark.",
+      "interpretation": { "resonance": "waiting", "emotional_arc": "dark_to_light", "emphasis": "patience", "tone": "calm" }
     },
     "eating_bread": {
       "refs": ["MAT.6.11", "PSA.104.14-15", "JHN.6.35"],
