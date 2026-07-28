@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Boots a local Paper 1.21.4 test server with the freshly built MineScripture jar.
+# Boots a local Paper 26.2 test server with the freshly built MineScripture jar.
 # Usage: scripts/run-server.sh   (from the repo root or scripts/)
 # Keys come from the environment: MSC_YVP_KEY, MSC_GLOO_ID, MSC_GLOO_SECRET.
 set -euo pipefail
@@ -13,8 +13,9 @@ if [ -f "$REPO_DIR/.env" ]; then
   source "$REPO_DIR/.env"
   echo "Loaded API keys from .env"
 fi
-PAPER_VERSION="1.21.4"
-JAVA_BIN="${JAVA_BIN:-$(ls -d "$REPO_DIR/../tools/jdk-21"*/Contents/Home/bin/java 2>/dev/null | head -1 || echo java)}"
+PAPER_VERSION="26.2"
+# Paper 26.2 requires Java 25.
+JAVA_BIN="${JAVA_BIN:-$(ls -d "$REPO_DIR/../tools/jdk-25"*/Contents/Home/bin/java 2>/dev/null | head -1 || echo java)}"
 
 mkdir -p "$RUN_DIR/plugins"
 

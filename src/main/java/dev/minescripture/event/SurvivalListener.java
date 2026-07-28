@@ -15,7 +15,7 @@ import org.bukkit.event.player.PlayerItemConsumeEvent;
 import java.util.Locale;
 
 /**
- * Survival-flavored moments. Paper 1.21.x compliance per the dev rules:
+ * Survival-flavored moments. Paper API compliance per the dev rules:
  * EntityDamageEvent checks getFinalDamage() > 0 AND that the player survived
  * (health − final damage in (0, 4.0]); modern consume/tame/bed events.
  */

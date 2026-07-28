@@ -1,7 +1,7 @@
 name: MineScripture
 version: '${version}'
 main: dev.minescripture.MineScripturePlugin
-api-version: '1.21'
+api-version: '26.2'
 description: An AI narrative layer that recognizes meaningful moments and connects them with Scripture.
 website: https://github.com/minescripture/minescripture
 commands:

@@ -62,7 +62,7 @@ MineScripture also asks the AI to judge *tone*. When a moment is comedic rather 
 
 ## Quick start
 
-Requires **Java 21** and a **Paper 1.21.x** server.
+Requires **Java 25** and a **Paper 26.2** server.
 
 ```bash
 # 1. Build
