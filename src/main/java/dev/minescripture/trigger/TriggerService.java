@@ -39,7 +39,11 @@ public final class TriggerService {
     }
 
     public interface MomentSink {
-        void present(TriggerContext ctx, Interpretation interpretation, Origin origin);
+        /**
+         * @param deathDepth deaths already spoken to in this run; the Presenter
+         *                   softens repeats rather than repeating the ceremony.
+         */
+        void present(TriggerContext ctx, Interpretation interpretation, Origin origin, int deathDepth);
     }
 
     /** Reconnect grace: a returning player within this window keeps their story. */
@@ -113,7 +117,7 @@ public final class TriggerService {
         boolean muted = playerState.isMuted(ctx.playerId());
         boolean milestoneDone = playerState.milestoneDone(ctx.playerId(), ctx.eventKey());
 
-        TriggerPolicy.Decision decision = policy.evaluate(ctx, muted, milestoneDone, story.storyVersion());
+        TriggerPolicy.Decision decision = policy.evaluate(ctx, muted, milestoneDone);
 
         if (!decision.present()) {
             // Suppressed deaths still shape the story arc; other repeats collapse
@@ -143,33 +147,31 @@ public final class TriggerService {
 
     private void sudden(TriggerContext ctx, StoryMemory story, TriggerPolicy.Decision decision, long postVersion) {
         if (decision.useAi() && source != null) {
-            policy.markInterpreted(ctx.playerId(), postVersion);
             source.interpret(ctx, story)
                     .orTimeout(config.timeoutSuddenMs, TimeUnit.MILLISECONDS)
                     .whenComplete((interp, err) -> {
                         if (err != null || interp == null) {
-                            deliver(ctx, defaultFor(ctx), Origin.DEFAULT);
+                            deliver(ctx, defaultFor(ctx), Origin.DEFAULT, decision.deathDepth());
                         } else {
                             profileCache.put(ctx.playerId(), ctx.eventKey(), interp, postVersion, ctx.at());
-                            deliver(ctx, interp, Origin.GLOO);
+                            deliver(ctx, interp, Origin.GLOO, decision.deathDepth());
                         }
                     });
         } else {
-            // No AI granted (budget/unchanged story): a sudden moment must never
-            // show a stale pre-event profile — curated default is the honest pick.
-            deliver(ctx, defaultFor(ctx), Origin.DEFAULT);
+            // No AI granted (over budget): a sudden moment must never show a
+            // stale pre-event profile — the curated default is the honest pick.
+            deliver(ctx, defaultFor(ctx), Origin.DEFAULT, decision.deathDepth());
         }
     }
 
     private void predictable(TriggerContext ctx, StoryMemory story, TriggerPolicy.Decision decision, long postVersion) {
         MomentProfileCache.Entry cached = profileCache.get(ctx.playerId(), ctx.eventKey());
         if (cached != null) {
-            deliver(ctx, cached.interpretation(), Origin.CACHE);
+            deliver(ctx, cached.interpretation(), Origin.CACHE, decision.deathDepth());
         } else {
-            deliver(ctx, defaultFor(ctx), Origin.DEFAULT);
+            deliver(ctx, defaultFor(ctx), Origin.DEFAULT, decision.deathDepth());
         }
         if (decision.useAi() && source != null) {
-            policy.markInterpreted(ctx.playerId(), postVersion);
             source.interpret(ctx, story)
                     .orTimeout(config.timeoutBackgroundMs, TimeUnit.MILLISECONDS)
                     .whenComplete((interp, err) -> {
@@ -180,9 +182,9 @@ public final class TriggerService {
         }
     }
 
-    private void deliver(TriggerContext ctx, Interpretation interpretation, Origin origin) {
+    private void deliver(TriggerContext ctx, Interpretation interpretation, Origin origin, int deathDepth) {
         originCounts.computeIfAbsent(origin, k -> new AtomicInteger()).incrementAndGet();
-        mainExecutor.execute(() -> sink.present(ctx, interpretation, origin));
+        mainExecutor.execute(() -> sink.present(ctx, interpretation, origin, deathDepth));
     }
 
     private Interpretation defaultFor(TriggerContext ctx) {

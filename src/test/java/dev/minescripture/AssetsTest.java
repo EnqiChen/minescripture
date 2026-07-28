@@ -92,7 +92,7 @@ class AssetsTest {
         assertEquals(EventSpec.Path.SUDDEN, death.path());
         assertEquals(EventSpec.Tier.MAJOR, death.tier());
         assertTrue(death.priority());
-        assertEquals(120, death.cooldownSeconds());
+        assertEquals(60, death.cooldownSeconds(), "base gap; TriggerPolicy escalates it within a run");
 
         EventSpec lowHealth = specs.get("low_health_survival");
         assertEquals(EventSpec.Path.SUDDEN, lowHealth.path());

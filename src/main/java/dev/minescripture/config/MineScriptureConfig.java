@@ -34,8 +34,12 @@ public final class MineScriptureConfig {
     public final int budgetPlayerPerHour;
     public final int budgetServerPerHour;
     public final int globalCooldownSeconds;
+    public final int globalPriorityCooldownSeconds;
     public final int sessionCap;
     public final int levityCooldownSeconds;
+    public final double deathEscalationFactor;
+    public final int deathMaxCooldownSeconds;
+    public final int deathClusterResetSeconds;
     public final boolean chime;
 
     private MineScriptureConfig(Builder b) {
@@ -52,8 +56,12 @@ public final class MineScriptureConfig {
         this.budgetPlayerPerHour = b.budgetPlayerPerHour;
         this.budgetServerPerHour = b.budgetServerPerHour;
         this.globalCooldownSeconds = b.globalCooldownSeconds;
+        this.globalPriorityCooldownSeconds = b.globalPriorityCooldownSeconds;
         this.sessionCap = b.sessionCap;
         this.levityCooldownSeconds = b.levityCooldownSeconds;
+        this.deathEscalationFactor = b.deathEscalationFactor;
+        this.deathMaxCooldownSeconds = b.deathMaxCooldownSeconds;
+        this.deathClusterResetSeconds = b.deathClusterResetSeconds;
         this.chime = b.chime;
     }
 
@@ -80,8 +88,12 @@ public final class MineScriptureConfig {
         b.budgetPlayerPerHour = v.integer("budget.player_per_hour", 10);
         b.budgetServerPerHour = v.integer("budget.server_per_hour", 100);
         b.globalCooldownSeconds = v.integer("cooldowns.global_s", 90);
+        b.globalPriorityCooldownSeconds = v.integer("cooldowns.global_priority_s", 15);
         b.sessionCap = v.integer("cooldowns.session_cap", 12);
         b.levityCooldownSeconds = v.integer("cooldowns.levity_s", 600);
+        b.deathEscalationFactor = v.dbl("deaths.escalation_factor", 1.75);
+        b.deathMaxCooldownSeconds = v.integer("deaths.max_cooldown_s", 300);
+        b.deathClusterResetSeconds = v.integer("deaths.run_reset_s", 600);
         b.chime = v.bool("presentation.chime", true);
         return new MineScriptureConfig(b);
     }
@@ -113,8 +125,12 @@ public final class MineScriptureConfig {
         private int budgetPlayerPerHour = 10;
         private int budgetServerPerHour = 100;
         private int globalCooldownSeconds = 90;
+        private int globalPriorityCooldownSeconds = 15;
         private int sessionCap = 12;
         private int levityCooldownSeconds = 600;
+        private double deathEscalationFactor = 1.75;
+        private int deathMaxCooldownSeconds = 300;
+        private int deathClusterResetSeconds = 600;
         private boolean chime = true;
 
         public Builder yvpKey(String v) { this.yvpKey = v; return this; }
@@ -130,8 +146,12 @@ public final class MineScriptureConfig {
         public Builder budgetPlayerPerHour(int v) { this.budgetPlayerPerHour = v; return this; }
         public Builder budgetServerPerHour(int v) { this.budgetServerPerHour = v; return this; }
         public Builder globalCooldownSeconds(int v) { this.globalCooldownSeconds = v; return this; }
+        public Builder globalPriorityCooldownSeconds(int v) { this.globalPriorityCooldownSeconds = v; return this; }
         public Builder sessionCap(int v) { this.sessionCap = v; return this; }
         public Builder levityCooldownSeconds(int v) { this.levityCooldownSeconds = v; return this; }
+        public Builder deathEscalationFactor(double v) { this.deathEscalationFactor = v; return this; }
+        public Builder deathMaxCooldownSeconds(int v) { this.deathMaxCooldownSeconds = v; return this; }
+        public Builder deathClusterResetSeconds(int v) { this.deathClusterResetSeconds = v; return this; }
         public Builder chime(boolean v) { this.chime = v; return this; }
 
         public MineScriptureConfig build() {

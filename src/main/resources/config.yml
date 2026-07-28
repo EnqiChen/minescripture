@@ -33,8 +33,19 @@ budget:
 
 cooldowns:
   global_s: 90            # minimum gap between any two presentations per player
+  global_priority_s: 15   # shorter floor for death / diamonds / first-times, so a
+                          # death moments after a discovery is still allowed to speak
   session_cap: 12         # max presentations per player per session
   levity_s: 600           # separate cooldown for humor
+
+# Death pacing. A run of quick deaths thins out rather than going silent: each
+# death waits escalation_factor times longer than the last, capped, and the run
+# resets after run_reset_s without dying. There is no lockout — a player having a
+# terrible night still hears something.
+deaths:
+  escalation_factor: 1.75
+  max_cooldown_s: 300
+  run_reset_s: 600
 
 presentation:
   chime: true

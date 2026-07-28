@@ -4,8 +4,6 @@ import dev.minescripture.config.EventSpec;
 import dev.minescripture.config.EventSpecs;
 import dev.minescripture.config.MineScriptureConfig;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -17,29 +15,25 @@ import java.util.UUID;
  * {@link TriggerContext#at()}, so tests drive a fake clock through contexts.
  *
  * Check order (the AFK-grinder fix depends on cooldowns running BEFORE the
- * budget gate): mute → milestone/pair flags → debounce → per-event cooldown →
- * death-spam guard → global cooldown → session cap → [present granted] →
- * unchanged-story check → AI budget.
+ * budget gate): mute → milestone/pair flags → debounce → per-event cooldown
+ * (death-paced) → global cooldown → session cap → [present granted] → AI budget.
+ *
+ * Restraint here is about pacing, never silence: repeated deaths wait longer
+ * each time, but no run of bad luck can lock a player out entirely.
  */
 public final class TriggerPolicy {
 
-    public record Decision(boolean present, boolean useAi, String reason) {
+    /**
+     * @param deathDepth how many deaths were already spoken to in this run before
+     *                   this one — the Presenter uses it to soften repeats.
+     */
+    public record Decision(boolean present, boolean useAi, String reason, int deathDepth) {
         public static Decision suppress(String reason) {
-            return new Decision(false, false, reason);
-        }
-
-        public static Decision presentWithAi() {
-            return new Decision(true, true, "ai");
-        }
-
-        public static Decision presentCached(String reason) {
-            return new Decision(true, false, reason);
+            return new Decision(false, false, reason, 0);
         }
     }
 
-    private static final long DEATH_SPAM_WINDOW_MS = 5 * 60_000L;
-    private static final int DEATH_SPAM_COUNT = 3;
-    private static final long DEATH_SPAM_SUPPRESS_MS = 15 * 60_000L;
+    static final String DEATH = "player_death";
 
     private final EventSpecs specs;
     private final MineScriptureConfig config;
@@ -49,9 +43,7 @@ public final class TriggerPolicy {
     private final Map<String, Long> lastAttempt = new HashMap<>();       // debounce, scoped key → millis
     private final Map<UUID, Long> lastPresentation = new HashMap<>();    // global cooldown
     private final Map<UUID, Integer> sessionCounts = new HashMap<>();
-    private final Map<UUID, Deque<Long>> deathTimes = new HashMap<>();
-    private final Map<UUID, Long> deathSuppressUntil = new HashMap<>();
-    private final Map<UUID, Long> lastInterpretedVersion = new HashMap<>();
+    private final Map<UUID, Integer> deathCluster = new HashMap<>();     // deaths presented in the current run
     private final Map<UUID, Long> lastLevity = new HashMap<>();
     private final Set<String> firedPairs = new HashSet<>();
 
@@ -61,23 +53,13 @@ public final class TriggerPolicy {
         this.budget = budget;
     }
 
-    public synchronized Decision evaluate(TriggerContext ctx, boolean muted, boolean milestoneDone, long storyVersion) {
+    public synchronized Decision evaluate(TriggerContext ctx, boolean muted, boolean milestoneDone) {
         EventSpec spec = specs.get(ctx.eventKey());
         if (spec == null) {
             return Decision.suppress("unknown_event");
         }
         long now = ctx.at();
         UUID player = ctx.playerId();
-
-        // Deaths always enter the spam window, even ones suppressed below —
-        // a grinder's suppressed deaths are exactly the signal.
-        if ("player_death".equals(ctx.eventKey())) {
-            Deque<Long> times = deathTimes.computeIfAbsent(player, k -> new ArrayDeque<>());
-            times.addLast(now);
-            while (!times.isEmpty() && times.peekFirst() < now - DEATH_SPAM_WINDOW_MS) {
-                times.removeFirst();
-            }
-        }
 
         if (muted) {
             return Decision.suppress("muted");
@@ -100,26 +82,33 @@ public final class TriggerPolicy {
             }
         }
 
+        // A run of quick deaths resets to depth 0 once the player has been alive
+        // a while. Depth is read here and committed only if we actually present.
+        int deathDepth = 0;
+        if (DEATH.equals(ctx.eventKey())) {
+            Long lastDeath = lastFire.get(scopedKey);
+            boolean sameRun = lastDeath != null
+                    && now - lastDeath <= config.deathClusterResetSeconds * 1000L;
+            deathDepth = sameRun ? deathCluster.getOrDefault(player, 0) : 0;
+            if (!sameRun) {
+                deathCluster.put(player, 0);
+            }
+        }
+
         if (spec.cooldownSeconds() > 0) {
             Long last = lastFire.get(scopedKey);
-            if (last != null && now - last < spec.cooldownSeconds() * 1000L) {
-                return Decision.suppress("event_cooldown");
+            long cooldownMs = effectiveCooldownMs(spec, ctx.eventKey(), deathDepth);
+            if (last != null && now - last < cooldownMs) {
+                return Decision.suppress(DEATH.equals(ctx.eventKey()) ? "death_pacing" : "event_cooldown");
             }
         }
 
-        if ("player_death".equals(ctx.eventKey())) {
-            Long until = deathSuppressUntil.get(player);
-            if (until != null && now < until) {
-                return Decision.suppress("death_spam");
-            }
-            if (deathTimes.get(player).size() >= DEATH_SPAM_COUNT) {
-                deathSuppressUntil.put(player, now + DEATH_SPAM_SUPPRESS_MS);
-                return Decision.suppress("death_spam");
-            }
-        }
-
+        // Priority moments (death, diamonds, first-times) get a shorter floor so
+        // that e.g. dying moments after a diamond find is still allowed to speak.
+        long globalMs = (spec.priority() ? config.globalPriorityCooldownSeconds
+                : config.globalCooldownSeconds) * 1000L;
         Long lastShown = lastPresentation.get(player);
-        if (lastShown != null && now - lastShown < config.globalCooldownSeconds * 1000L) {
+        if (lastShown != null && now - lastShown < globalMs) {
             return Decision.suppress("global_cooldown");
         }
 
@@ -134,21 +123,35 @@ public final class TriggerPolicy {
         if (spec.once() == EventSpec.Once.SESSION_PAIR && ctx.pairKey() != null) {
             firedPairs.add(ctx.pairKey());
         }
+        if (DEATH.equals(ctx.eventKey())) {
+            deathCluster.put(player, deathDepth + 1);
+        }
 
-        // AI decision: unchanged story → reuse last interpretation; then budget.
-        Long lastVersion = lastInterpretedVersion.get(player);
-        if (lastVersion != null && lastVersion == storyVersion) {
-            return Decision.presentCached("unchanged_story");
-        }
         if (!budget.tryAcquire(player, spec.priority(), now)) {
-            return Decision.presentCached("budget");
+            return new Decision(true, false, "budget", deathDepth);
         }
-        return Decision.presentWithAi();
+        return new Decision(true, true, "ai", deathDepth);
     }
 
-    /** Called by TriggerService after it records the moment and commits to an AI call. */
-    public synchronized void markInterpreted(UUID player, long storyVersion) {
-        lastInterpretedVersion.put(player, storyVersion);
+    /**
+     * Death pacing: each death in a quick run waits longer than the last, but the
+     * gap is capped and never becomes silence. A player who dies four times in
+     * five minutes still hears something — just not every single time.
+     */
+    private long effectiveCooldownMs(EventSpec spec, String eventKey, int deathDepth) {
+        long base = spec.cooldownSeconds() * 1000L;
+        if (!DEATH.equals(eventKey) || deathDepth <= 1) {
+            return base;
+        }
+        // deathDepth counts deaths already spoken to, so the gap after the first
+        // one is the base wait; escalation starts from the second onward.
+        double scaled = base * Math.pow(config.deathEscalationFactor, deathDepth - 1);
+        return (long) Math.min(scaled, config.deathMaxCooldownSeconds * 1000L);
+    }
+
+    /** How many deaths have already been spoken to in the current run (0 = none). */
+    public synchronized int deathClusterDepth(UUID player) {
+        return deathCluster.getOrDefault(player, 0);
     }
 
     /** Separate levity cooldown — humor must be rarer than Scripture. */
@@ -164,7 +167,7 @@ public final class TriggerPolicy {
     /** Session-scoped state resets at logout. Cooldowns survive relogs by design. */
     public synchronized void clearSession(UUID player) {
         sessionCounts.remove(player);
-        lastInterpretedVersion.remove(player);
+        deathCluster.remove(player);
         firedPairs.removeIf(pair -> pair.contains(player.toString()));
     }
 

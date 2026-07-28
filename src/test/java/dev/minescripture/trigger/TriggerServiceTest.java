@@ -43,7 +43,7 @@ class TriggerServiceTest {
         }
 
         @Override
-        public void present(TriggerContext ctx, Interpretation interp, TriggerService.Origin origin) {
+        public void present(TriggerContext ctx, Interpretation interp, TriggerService.Origin origin, int deathDepth) {
             presented.add(new Presented(ctx, interp, origin));
             latch.countDown();
         }
@@ -140,7 +140,7 @@ class TriggerServiceTest {
     }
 
     @Test
-    void predictablePathServesCacheAndSkipsAiWhenStoryUnchanged(@TempDir Path tmp) throws Exception {
+    void predictablePathServesInstantlyFromCacheWhileRestockingBehind(@TempDir Path tmp) throws Exception {
         AtomicInteger sourceCalls = new AtomicInteger();
         RecordingSink sink = new RecordingSink(2);
         TriggerService svc = service(MineScriptureConfig.builder().build(), tmp,
@@ -152,8 +152,8 @@ class TriggerServiceTest {
         svc.onJoin(P1, 0);
         // First bread: cache empty → curated default presents instantly, restock happens async.
         svc.submit(TriggerContext.of(P1, "eating_bread", 1_000L));
-        // Second bread after the 1800 s event cooldown, nothing new in the story:
-        // unchanged-story check reuses the restocked cache, no second AI call.
+        // Second bread, well past the event cooldown: the player sees the cached
+        // Gloo reading instantly while a fresh one is fetched behind it.
         svc.submit(TriggerContext.of(P1, "eating_bread", 2_000_000L));
         assertTrue(sink.latch.await(2, TimeUnit.SECONDS));
 
@@ -161,7 +161,8 @@ class TriggerServiceTest {
         assertEquals(TriggerService.Origin.CACHE, sink.presented.get(1).origin());
         assertEquals("gratitude", sink.presented.get(1).interp().emphasis(),
                 "second serve comes from the Gloo-restocked cache");
-        assertEquals(1, sourceCalls.get(), "unchanged story must not burn a second AI call");
+        assertEquals(2, sourceCalls.get(),
+                "each fired moment is genuinely new information and earns its own reading");
     }
 
     @Test

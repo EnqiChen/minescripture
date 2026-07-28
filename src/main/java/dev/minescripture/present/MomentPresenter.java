@@ -98,7 +98,7 @@ public final class MomentPresenter implements TriggerService.MomentSink {
     // ------------------------------------------------------------------ sink
 
     @Override
-    public void present(TriggerContext ctx, Interpretation interp, TriggerService.Origin origin) {
+    public void present(TriggerContext ctx, Interpretation interp, TriggerService.Origin origin, int deathDepth) {
         Player player = Bukkit.getPlayer(ctx.playerId());
         if (player == null) {
             return;
@@ -123,7 +123,7 @@ public final class MomentPresenter implements TriggerService.MomentSink {
             }
             String frame = frameFor(ctx.eventKey());
             ShownMoment moment = new ShownMoment(ctx, interp, origin, passage.get(), null, frame, ctx.at());
-            deliverVerse(ctx, moment);
+            deliverVerse(ctx, moment, deathDepth);
         }).exceptionally(err -> {
             log.warning("[" + ctx.eventKey() + "] presentation failed: " + err.getMessage());
             return null;
@@ -181,18 +181,18 @@ public final class MomentPresenter implements TriggerService.MomentSink {
                         : fetchFirstAvailable(refs, index + 1));
     }
 
-    private void deliverVerse(TriggerContext ctx, ShownMoment moment) {
+    private void deliverVerse(TriggerContext ctx, ShownMoment moment, int deathDepth) {
         deliverTimed(ctx, Bukkit.getPlayer(ctx.playerId()), anchor -> {
             for (Player recipient : recipients(ctx)) {
-                show(recipient, ctx, moment);
+                show(recipient, ctx, moment, deathDepth);
                 markSeen(recipient.getUniqueId(), moment);
             }
             lastShown.put(ctx.playerId(), moment);
         });
     }
 
-    private void show(Player player, TriggerContext ctx, ShownMoment moment) {
-        switch (tierOf(ctx.eventKey())) {
+    private void show(Player player, TriggerContext ctx, ShownMoment moment, int deathDepth) {
+        switch (tierOf(ctx.eventKey(), deathDepth)) {
             case "minor" -> presenter.showMinor(player, moment.passage());
             case "major" -> presenter.showMajor(player, moment.frame(), moment.passage());
             default -> presenter.showStandard(player, moment.frame(), moment.passage());
@@ -299,7 +299,14 @@ public final class MomentPresenter implements TriggerService.MomentSink {
         return defaults == null ? "" : defaults.frame();
     }
 
-    private String tierOf(String eventKey) {
+    /**
+     * Repeated deaths in one bad run keep their verse but lose the ceremony:
+     * the title is for the death that mattered, not the fourth in a row.
+     */
+    private String tierOf(String eventKey, int deathDepth) {
+        if ("player_death".equals(eventKey) && deathDepth > 0) {
+            return "standard";
+        }
         return switch (eventKey) {
             case "eating_bread", "sleep" -> "minor";
             case "player_death", "found_diamonds", "first_join" -> "major";
