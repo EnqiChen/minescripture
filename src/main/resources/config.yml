@@ -1,0 +1,40 @@
+# MineScripture configuration
+#
+# API keys: leave these empty and use environment variables instead (recommended):
+#   MSC_YVP_KEY      - YouVersion Platform app key
+#   MSC_GLOO_ID      - Gloo AI Studio client id
+#   MSC_GLOO_SECRET  - Gloo AI Studio client secret
+# Values set here override the environment only if non-empty.
+
+youversion:
+  app_key: ""
+  bible_id: 3034          # Berean Standard Bible (public domain)
+
+gloo:
+  client_id: ""
+  client_secret: ""
+  # Design intent: recommend Scripture based on the human moment and biblical
+  # themes, without applying a denominational lens. Mapped to Gloo's accepted
+  # tradition value at request time; admins may set a specific tradition.
+  tradition: broad_christian
+  temperature: 0.4
+  timeout_ms_sudden: 2500       # hard cap for death/diamonds/low-health path
+  timeout_ms_background: 4000   # background restock of cached interpretations
+
+# Levity: on tone-light moments (comedic deaths), serve humor instead of a verse.
+# levity_ai additionally allows a short AI-generated quip (clearly separated from
+# Scripture, LevityGuard-validated). Shipped default off; demo config turns it on.
+levity: true
+levity_ai: false
+
+budget:
+  player_per_hour: 10
+  server_per_hour: 100
+
+cooldowns:
+  global_s: 90            # minimum gap between any two presentations per player
+  session_cap: 12         # max presentations per player per session
+  levity_s: 600           # separate cooldown for humor
+
+presentation:
+  chime: true

@@ -1,0 +1,217 @@
+package dev.minescripture.trigger;
+
+import dev.minescripture.config.EventSpec;
+import dev.minescripture.config.EventSpecs;
+import dev.minescripture.config.FallbackPool;
+import dev.minescripture.config.MineScriptureConfig;
+import dev.minescripture.select.Interpretation;
+import dev.minescripture.select.MomentProfileCache;
+
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+
+/**
+ * Orchestrates: listener event → policy gate → two-path timing → sink.
+ * Bukkit-free: the Gloo interpreter and the Presenter plug in through the
+ * {@link InterpretationSource} and {@link MomentSink} interfaces; the plugin
+ * supplies Bukkit's main-thread scheduler as {@code mainExecutor}.
+ *
+ * Two-path timing:
+ *  - PREDICTABLE: present instantly from cache (or curated default), then
+ *    restock the cache asynchronously with the updated story.
+ *  - SUDDEN: fresh interpretation including the just-fired event, bounded by
+ *    the sudden timeout; on timeout/failure the curated default presents.
+ *    A pre-event cached interpretation is never shown for a sudden moment.
+ */
+public final class TriggerService {
+
+    public enum Origin { GLOO, CACHE, DEFAULT }
+
+    public interface InterpretationSource {
+        CompletableFuture<Interpretation> interpret(TriggerContext ctx, StoryMemory story);
+    }
+
+    public interface MomentSink {
+        void present(TriggerContext ctx, Interpretation interpretation, Origin origin);
+    }
+
+    /** Reconnect grace: a returning player within this window keeps their story. */
+    public static final long RECONNECT_GRACE_MS = 120_000L;
+
+    private final MineScriptureConfig config;
+    private final EventSpecs specs;
+    private final TriggerPolicy policy;
+    private final FallbackPool fallback;
+    private final MomentProfileCache profileCache;
+    private final PlayerStateManager playerState;
+    private final InterpretationSource source;
+    private final MomentSink sink;
+    private final Executor mainExecutor;
+
+    private final Map<UUID, StoryMemory> stories = new ConcurrentHashMap<>();
+    private final Map<String, AtomicInteger> firedByEvent = new ConcurrentHashMap<>();
+    private final Map<String, AtomicInteger> suppressedByReason = new ConcurrentHashMap<>();
+    private final Map<Origin, AtomicInteger> originCounts = new ConcurrentHashMap<>();
+
+    public TriggerService(MineScriptureConfig config,
+                          EventSpecs specs,
+                          TriggerPolicy policy,
+                          FallbackPool fallback,
+                          MomentProfileCache profileCache,
+                          PlayerStateManager playerState,
+                          InterpretationSource source,
+                          MomentSink sink,
+                          Executor mainExecutor) {
+        this.config = config;
+        this.specs = specs;
+        this.policy = policy;
+        this.fallback = fallback;
+        this.profileCache = profileCache;
+        this.playerState = playerState;
+        this.source = source;
+        this.sink = sink;
+        this.mainExecutor = mainExecutor;
+    }
+
+    public StoryMemory story(UUID playerId) {
+        return stories.computeIfAbsent(playerId, k -> new StoryMemory(System.currentTimeMillis()));
+    }
+
+    public void onJoin(UUID playerId, long now) {
+        StoryMemory existing = stories.get(playerId);
+        if (existing == null || existing.expired(now, RECONNECT_GRACE_MS)) {
+            stories.put(playerId, new StoryMemory(now));
+            profileCache.clear(playerId);
+        } else {
+            existing.clearQuit();
+        }
+    }
+
+    public void onQuit(UUID playerId, long now) {
+        StoryMemory story = stories.get(playerId);
+        if (story != null) {
+            story.markQuit(now);
+        }
+        policy.clearSession(playerId);
+    }
+
+    /** Entry point for every candidate moment. Safe to call from the main thread. */
+    public void submit(TriggerContext ctx) {
+        EventSpec spec = specs.get(ctx.eventKey());
+        if (spec == null) {
+            count(suppressedByReason, "unknown_event");
+            return;
+        }
+        StoryMemory story = story(ctx.playerId());
+        boolean muted = playerState.isMuted(ctx.playerId());
+        boolean milestoneDone = playerState.milestoneDone(ctx.playerId(), ctx.eventKey());
+
+        TriggerPolicy.Decision decision = policy.evaluate(ctx, muted, milestoneDone, story.storyVersion());
+
+        if (!decision.present()) {
+            // Suppressed deaths still shape the story arc; other repeats collapse
+            // into aggregates — the AFK-grinder guard's memory half.
+            if ("player_death".equals(ctx.eventKey())) {
+                story.recordEvent(ctx.eventKey(), ctx.cause(), ctx.at());
+            } else {
+                story.recordCollapsed(ctx.eventKey());
+            }
+            count(suppressedByReason, decision.reason());
+            return;
+        }
+
+        if (spec.once() == EventSpec.Once.PERSISTENT) {
+            playerState.markMilestone(ctx.playerId(), ctx.eventKey());
+        }
+        story.recordEvent(ctx.eventKey(), ctx.cause(), ctx.at());
+        long postVersion = story.storyVersion();
+        count(firedByEvent, ctx.eventKey());
+
+        if (spec.path() == EventSpec.Path.SUDDEN) {
+            sudden(ctx, story, decision, postVersion);
+        } else {
+            predictable(ctx, story, decision, postVersion);
+        }
+    }
+
+    private void sudden(TriggerContext ctx, StoryMemory story, TriggerPolicy.Decision decision, long postVersion) {
+        if (decision.useAi() && source != null) {
+            policy.markInterpreted(ctx.playerId(), postVersion);
+            source.interpret(ctx, story)
+                    .orTimeout(config.timeoutSuddenMs, TimeUnit.MILLISECONDS)
+                    .whenComplete((interp, err) -> {
+                        if (err != null || interp == null) {
+                            deliver(ctx, defaultFor(ctx), Origin.DEFAULT);
+                        } else {
+                            profileCache.put(ctx.playerId(), ctx.eventKey(), interp, postVersion, ctx.at());
+                            deliver(ctx, interp, Origin.GLOO);
+                        }
+                    });
+        } else {
+            // No AI granted (budget/unchanged story): a sudden moment must never
+            // show a stale pre-event profile — curated default is the honest pick.
+            deliver(ctx, defaultFor(ctx), Origin.DEFAULT);
+        }
+    }
+
+    private void predictable(TriggerContext ctx, StoryMemory story, TriggerPolicy.Decision decision, long postVersion) {
+        MomentProfileCache.Entry cached = profileCache.get(ctx.playerId(), ctx.eventKey());
+        if (cached != null) {
+            deliver(ctx, cached.interpretation(), Origin.CACHE);
+        } else {
+            deliver(ctx, defaultFor(ctx), Origin.DEFAULT);
+        }
+        if (decision.useAi() && source != null) {
+            policy.markInterpreted(ctx.playerId(), postVersion);
+            source.interpret(ctx, story)
+                    .orTimeout(config.timeoutBackgroundMs, TimeUnit.MILLISECONDS)
+                    .whenComplete((interp, err) -> {
+                        if (err == null && interp != null) {
+                            profileCache.put(ctx.playerId(), ctx.eventKey(), interp, postVersion, ctx.at());
+                        }
+                    });
+        }
+    }
+
+    private void deliver(TriggerContext ctx, Interpretation interpretation, Origin origin) {
+        originCounts.computeIfAbsent(origin, k -> new AtomicInteger()).incrementAndGet();
+        mainExecutor.execute(() -> sink.present(ctx, interpretation, origin));
+    }
+
+    private Interpretation defaultFor(TriggerContext ctx) {
+        Interpretation def = fallback.defaultInterpretation(ctx.eventKey());
+        return def != null ? def
+                : new Interpretation("presence", "moment", "hope", "solemn", List.of(), null, "generic default");
+    }
+
+    private static void count(Map<String, AtomicInteger> map, String key) {
+        map.computeIfAbsent(key, k -> new AtomicInteger()).incrementAndGet();
+    }
+
+    // --- stats for /msc stats ---
+
+    public Map<String, Integer> firedSnapshot() {
+        return snapshot(firedByEvent);
+    }
+
+    public Map<String, Integer> suppressedSnapshot() {
+        return snapshot(suppressedByReason);
+    }
+
+    public Map<String, Integer> originSnapshot() {
+        return originCounts.entrySet().stream()
+                .collect(Collectors.toMap(e -> e.getKey().name(), e -> e.getValue().get()));
+    }
+
+    private static Map<String, Integer> snapshot(Map<String, AtomicInteger> map) {
+        return map.entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get()));
+    }
+}

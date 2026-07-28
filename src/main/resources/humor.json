@@ -1,0 +1,20 @@
+{
+  "_comment": "MineScripture curated levity pool. 100% human-written/curated, served only when Gloo classifies a moment's tone as 'light' (comedic deaths and pratfalls). Never presented as Scripture — the Presenter uses a distinct light format with no verse frame and no attribution line.",
+  "quips": [
+    { "id": "fall-pride",    "causes": ["fall"],     "text": "Pride goes before a fall. So does standing too close to the edge." },
+    { "id": "cactus-donkey", "causes": ["cactus"],   "text": "Even Balaam's donkey would have seen that cactus." },
+    { "id": "cactus-lilies", "causes": ["cactus"],   "text": "Consider the lilies of the field... they never hug cacti." },
+    { "id": "farm-jonah",    "causes": ["fall", "farm"], "text": "Jonah spent three days inside a fish. You spent three seconds inside your own wheat farm." },
+    { "id": "dig-light",     "causes": ["fall", "lava"], "text": "Let there be light. Preferably a torch, before you dig straight down." },
+    { "id": "drown-noah",    "causes": ["drown"],    "text": "Noah prepared for forty days of flood. You were defeated by one pond." },
+    { "id": "pit-wilderness","causes": ["fall", "farm"], "text": "Forty years in the wilderness, and the Israelites never once fell into their own pit." },
+    { "id": "zombie-fists",  "causes": ["mob"],      "text": "A cheerful heart is good medicine. So is not punching a zombie barehanded." },
+    { "id": "jericho",       "causes": ["fall"],     "text": "The walls of Jericho fell. So, apparently, did you." },
+    { "id": "creeper-stones","causes": ["mob"],      "text": "David faced Goliath with five smooth stones. You faced a creeper with a carrot." },
+    { "id": "magma-slow",    "causes": ["lava", "fire"], "text": "Be swift to hear, slow to speak, and slower to step on magma." },
+    { "id": "lava-redsea",   "causes": ["lava"],     "text": "The Red Sea parted for Moses. Your lava lake made no such promises." },
+    { "id": "look-down",     "causes": ["fall"],     "text": "Wise men still seek Him. Wiser men look down before they walk." },
+    { "id": "lions-wolf",    "causes": ["mob"],      "text": "Daniel survived the lions' den. Your own wolf just wanted a bone." },
+    { "id": "bread-boss",    "causes": ["mob", "starve"], "text": "Man does not live on bread alone — but eating something before a fight wouldn't have hurt." }
+  ]
+}

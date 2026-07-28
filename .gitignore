@@ -1,0 +1,23 @@
+# Build
+build/
+.gradle/
+out/
+*.class
+
+# Secrets — keys live in env vars (MSC_YVP_KEY / MSC_GLOO_ID / MSC_GLOO_SECRET), never in git
+*.env
+.env*
+secrets/
+local-config.yml
+
+# Local test server (world data, downloaded Paper jar, logs)
+run/
+
+# Local toolchain
+tools/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.DS_Store

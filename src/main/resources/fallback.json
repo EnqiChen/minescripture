@@ -1,0 +1,107 @@
+{
+  "_comment": "MineScripture fallback pool. Refs use internal USFM-style BOOK.CHAPTER.VERSE. Verse TEXT is never stored here — it is always fetched verbatim from YouVersion. The {themes, tone} metadata doubles as the CandidateScorer's semantic-fit table.",
+  "tones": ["solemn", "warm", "awe", "calm", "encouraging", "light"],
+  "verses": [
+    { "ref": "JER.29.11",   "display": "Jeremiah 29:11",      "events": ["first_join"],          "themes": ["hope", "future", "beginnings"],        "tone": "warm" },
+    { "ref": "PSA.121.7-8", "display": "Psalm 121:7-8",       "events": ["first_join"],          "themes": ["protection", "journey", "presence"],   "tone": "warm" },
+    { "ref": "2CO.5.17",    "display": "2 Corinthians 5:17",  "events": ["first_join"],          "themes": ["renewal", "beginnings", "identity"],   "tone": "encouraging" },
+    { "ref": "JOS.1.9",     "display": "Joshua 1:9",          "events": ["first_join"],          "themes": ["courage", "presence", "journey"],      "tone": "encouraging" },
+
+    { "ref": "PSA.4.8",       "display": "Psalm 4:8",         "events": ["first_nightfall", "sleep"], "themes": ["peace", "rest", "safety"],        "tone": "calm" },
+    { "ref": "ISA.41.10",     "display": "Isaiah 41:10",      "events": ["first_nightfall"],     "themes": ["courage", "fear", "presence"],         "tone": "encouraging" },
+    { "ref": "PSA.27.1",      "display": "Psalm 27:1",        "events": ["first_nightfall"],     "themes": ["light", "fear", "confidence"],         "tone": "encouraging" },
+    { "ref": "PSA.139.11-12", "display": "Psalm 139:11-12",   "events": ["first_nightfall"],     "themes": ["darkness", "presence", "awe"],         "tone": "awe" },
+
+    { "ref": "MAT.4.4",       "display": "Matthew 4:4",       "events": ["eating_bread"],        "themes": ["sustenance", "word", "dependence"],    "tone": "calm" },
+    { "ref": "JHN.6.35",      "display": "John 6:35",         "events": ["eating_bread"],        "themes": ["sustenance", "provision", "life"],     "tone": "warm" },
+    { "ref": "PSA.104.14-15", "display": "Psalm 104:14-15",   "events": ["eating_bread"],        "themes": ["provision", "creation", "gratitude"],  "tone": "warm" },
+    { "ref": "MAT.6.11",      "display": "Matthew 6:11",      "events": ["eating_bread"],        "themes": ["provision", "dependence", "gratitude"], "tone": "calm" },
+
+    { "ref": "PRO.12.10",     "display": "Proverbs 12:10",    "events": ["taming"],              "themes": ["care", "kindness", "creation"],        "tone": "warm" },
+    { "ref": "GEN.1.25",      "display": "Genesis 1:25",      "events": ["taming"],              "themes": ["creation", "goodness", "wonder"],      "tone": "awe" },
+    { "ref": "PSA.36.6",      "display": "Psalm 36:6",        "events": ["taming"],              "themes": ["creation", "care", "faithfulness"],    "tone": "awe" },
+
+    { "ref": "PSA.34.18",     "display": "Psalm 34:18",       "events": ["low_health_survival", "player_death"], "themes": ["comfort", "nearness", "brokenness"], "tone": "solemn" },
+    { "ref": "PSA.46.1",      "display": "Psalm 46:1",        "events": ["low_health_survival"], "themes": ["refuge", "strength", "help"],          "tone": "encouraging" },
+    { "ref": "2CO.4.8-9",     "display": "2 Corinthians 4:8-9", "events": ["low_health_survival"], "themes": ["perseverance", "endurance", "hope"], "tone": "encouraging" },
+    { "ref": "PSA.30.2-3",    "display": "Psalm 30:2-3",      "events": ["low_health_survival"], "themes": ["deliverance", "healing", "gratitude"], "tone": "warm" },
+
+    { "ref": "PRO.2.4-5",     "display": "Proverbs 2:4-5",    "events": ["found_diamonds"],      "themes": ["treasure", "wisdom", "seeking"],       "tone": "encouraging" },
+    { "ref": "MAT.13.44",     "display": "Matthew 13:44",     "events": ["found_diamonds"],      "themes": ["treasure", "joy", "discovery"],        "tone": "warm" },
+    { "ref": "PRO.3.13-15",   "display": "Proverbs 3:13-15",  "events": ["found_diamonds"],      "themes": ["wisdom", "treasure", "worth"],         "tone": "awe" },
+    { "ref": "MAT.6.19-21",   "display": "Matthew 6:19-21",   "events": ["found_diamonds"],      "themes": ["treasure", "heart", "perspective"],    "tone": "calm" },
+
+    { "ref": "LAM.3.22-23",   "display": "Lamentations 3:22-23", "events": ["player_death"],     "themes": ["mercy", "renewal", "hope", "morning"], "tone": "solemn" },
+    { "ref": "ISA.43.2",      "display": "Isaiah 43:2",       "events": ["player_death"],        "themes": ["comfort", "presence", "trial"],        "tone": "solemn" },
+    { "ref": "PSA.23.4",      "display": "Psalm 23:4",        "events": ["player_death"],        "themes": ["comfort", "presence", "valley"],       "tone": "solemn" },
+    { "ref": "ROM.5.3-5",     "display": "Romans 5:3-5",      "events": ["player_death"],        "themes": ["perseverance", "character", "hope"],   "tone": "encouraging" },
+    { "ref": "PSA.71.20",     "display": "Psalm 71:20",       "events": ["player_death"],        "themes": ["restoration", "renewal", "depths"],    "tone": "solemn" },
+    { "ref": "JHN.11.25",     "display": "John 11:25",        "events": ["player_death"],        "themes": ["resurrection", "life", "hope"],        "tone": "solemn" },
+
+    { "ref": "PSA.127.2",     "display": "Psalm 127:2",       "events": ["sleep"],               "themes": ["rest", "trust", "provision"],          "tone": "calm" },
+    { "ref": "MAT.11.28",     "display": "Matthew 11:28",     "events": ["sleep"],               "themes": ["rest", "burden", "invitation"],        "tone": "warm" },
+    { "ref": "PRO.3.24",      "display": "Proverbs 3:24",     "events": ["sleep"],               "themes": ["rest", "peace", "safety"],             "tone": "calm" },
+
+    { "ref": "PSA.29.3-4",    "display": "Psalm 29:3-4",      "events": ["thunderstorm"],        "themes": ["power", "voice", "awe"],               "tone": "awe" },
+    { "ref": "JOB.37.5",      "display": "Job 37:5",          "events": ["thunderstorm"],        "themes": ["awe", "wonder", "power"],              "tone": "awe" },
+    { "ref": "MRK.4.39",      "display": "Mark 4:39",         "events": ["thunderstorm"],        "themes": ["peace", "power", "calm"],              "tone": "calm" },
+    { "ref": "PSA.91.1-2",    "display": "Psalm 91:1-2",      "events": ["thunderstorm"],        "themes": ["refuge", "shelter", "trust"],          "tone": "encouraging" },
+
+    { "ref": "ECC.4.9-10",    "display": "Ecclesiastes 4:9-10", "events": ["fellowship"],        "themes": ["friendship", "community", "help"],     "tone": "warm" },
+    { "ref": "PRO.27.17",     "display": "Proverbs 27:17",    "events": ["fellowship"],          "themes": ["friendship", "growth", "encouragement"], "tone": "encouraging" },
+    { "ref": "MAT.18.20",     "display": "Matthew 18:20",     "events": ["fellowship"],          "themes": ["community", "presence", "gathering"],  "tone": "solemn" },
+    { "ref": "PRO.17.17",     "display": "Proverbs 17:17",    "events": ["fellowship"],          "themes": ["friendship", "loyalty", "love"],       "tone": "warm" }
+  ],
+  "event_defaults": {
+    "first_join": {
+      "refs": ["JER.29.11", "JOS.1.9", "PSA.121.7-8"],
+      "frame": "Welcome, traveler.",
+      "interpretation": { "resonance": "beginnings", "emotional_arc": "arrival", "emphasis": "hope", "tone": "warm" }
+    },
+    "first_nightfall": {
+      "refs": ["PSA.27.1", "ISA.41.10", "PSA.139.11-12"],
+      "frame": "The first night falls.",
+      "interpretation": { "resonance": "fear", "emotional_arc": "darkness_to_trust", "emphasis": "courage", "tone": "encouraging" }
+    },
+    "eating_bread": {
+      "refs": ["MAT.6.11", "PSA.104.14-15", "JHN.6.35"],
+      "frame": "Bread for the road.",
+      "interpretation": { "resonance": "provision", "emotional_arc": "sustained", "emphasis": "gratitude", "tone": "calm" }
+    },
+    "taming": {
+      "refs": ["PRO.12.10", "GEN.1.25", "PSA.36.6"],
+      "frame": "A companion joins you.",
+      "interpretation": { "resonance": "care", "emotional_arc": "companionship", "emphasis": "kindness", "tone": "warm" }
+    },
+    "low_health_survival": {
+      "refs": ["PSA.46.1", "PSA.30.2-3", "2CO.4.8-9"],
+      "frame": "That was close.",
+      "interpretation": { "resonance": "deliverance", "emotional_arc": "peril_to_relief", "emphasis": "refuge", "tone": "encouraging" }
+    },
+    "found_diamonds": {
+      "refs": ["MAT.13.44", "PRO.2.4-5", "PRO.3.13-15"],
+      "frame": "Deep in the earth, a light.",
+      "interpretation": { "resonance": "discovery", "emotional_arc": "seeking_to_finding", "emphasis": "joy", "tone": "awe" }
+    },
+    "player_death": {
+      "refs": ["LAM.3.22-23", "ISA.43.2", "PSA.23.4"],
+      "frame": "You awaken at dawn.",
+      "interpretation": { "resonance": "loss", "emotional_arc": "setback_to_hope", "emphasis": "comfort", "tone": "solemn" }
+    },
+    "sleep": {
+      "refs": ["PSA.4.8", "PRO.3.24", "PSA.127.2"],
+      "frame": "Rest now.",
+      "interpretation": { "resonance": "rest", "emotional_arc": "day_to_rest", "emphasis": "peace", "tone": "calm" }
+    },
+    "thunderstorm": {
+      "refs": ["PSA.29.3-4", "PSA.91.1-2", "JOB.37.5"],
+      "frame": "The heavens speak.",
+      "interpretation": { "resonance": "awe", "emotional_arc": "storm_to_shelter", "emphasis": "wonder", "tone": "awe" }
+    },
+    "fellowship": {
+      "refs": ["ECC.4.9-10", "PRO.27.17", "PRO.17.17"],
+      "frame": "You are not alone.",
+      "interpretation": { "resonance": "community", "emotional_arc": "alone_to_together", "emphasis": "friendship", "tone": "warm" }
+    }
+  }
+}

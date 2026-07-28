@@ -1,0 +1,19 @@
+name: MineScripture
+version: '${version}'
+main: dev.minescripture.MineScripturePlugin
+api-version: '1.21'
+description: An AI narrative layer that recognizes meaningful moments and connects them with Scripture.
+website: https://github.com/minescripture/minescripture
+commands:
+  verse:
+    description: Replay the last verse, or use why / mute / unmute / translation / journal / link
+    usage: /verse [why|mute|unmute|translation|journal|link]
+  msc:
+    description: MineScripture admin commands
+    aliases: [minescripture]
+    permission: minescripture.admin
+    usage: /msc <explain|trigger|stats|demo|reload|prefetch>
+permissions:
+  minescripture.admin:
+    description: Access to MineScripture admin commands
+    default: op
