@@ -162,7 +162,7 @@ Default translation: **Berean Standard Bible (BSB)**.
 
 - [`docs/WRITEUP.md`](docs/WRITEUP.md) — the technical writeup
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — how the pieces fit
-- [`docs/PLAN.md`](docs/PLAN.md) — the plan this was built from
+- [`docs/demo-script.md`](docs/demo-script.md) — the demo walkthrough
 - [`docs/curation/`](docs/curation/) — prompts and curation notes
 
 ## License
