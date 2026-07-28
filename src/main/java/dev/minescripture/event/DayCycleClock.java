@@ -19,9 +19,11 @@ import java.util.concurrent.ConcurrentHashMap;
  * <ul>
  *   <li><b>first_nightfall</b> — the first night this player ever experiences,
  *       detected as world time crossing into night while they are online.</li>
- *   <li><b>survived_the_night</b> — dawn, but only for players something actually
- *       came after during the night. Hiding in a hole until morning is not
- *       survival, and neither is sleeping through it.</li>
+ *   <li><b>survived_the_night</b> — dawn, but only for players the night actually
+ *       came after: they were hit by something hostile, or fought something
+ *       hostile. Hiding in a hole until morning is not survival, and neither is
+ *       sleeping through it. Health at dawn is irrelevant — healing up after a
+ *       fight does not undo having been in one.</li>
  * </ul>
  *
  * Runs as a repeating sync task; crossings are detected per world.
@@ -49,12 +51,34 @@ public final class DayCycleClock implements Runnable {
      * hostile damage during night hours counts toward surviving the night.
      */
     public void noteDamage(Player player, String cause) {
-        if (!NIGHT_THREATS.contains(cause)) {
-            return;
+        noteDamage(player.getUniqueId(), cause, player.getWorld().getTime());
+    }
+
+    /**
+     * Called when a player strikes a hostile. Fighting the night off counts as
+     * surviving it too — otherwise the moment would only ever reach players who
+     * got hurt, quietly rewarding bad play over good.
+     */
+    public void noteFoughtBack(Player player) {
+        markIfNight(player.getUniqueId(), player.getWorld().getTime());
+    }
+
+    // Bukkit-free cores, so the rules are unit-testable without a server.
+
+    void noteDamage(UUID playerId, String cause, long worldTime) {
+        if (NIGHT_THREATS.contains(cause)) {
+            markIfNight(playerId, worldTime);
         }
-        if (player.getWorld().getTime() >= NIGHT_START) {
-            survivedSomething.add(player.getUniqueId());
+    }
+
+    void markIfNight(UUID playerId, long worldTime) {
+        if (worldTime >= NIGHT_START) {
+            survivedSomething.add(playerId);
         }
+    }
+
+    boolean hasSurvivedSomething(UUID playerId) {
+        return survivedSomething.contains(playerId);
     }
 
     /** Dying means you did not survive the night — the death has its own moment. */
