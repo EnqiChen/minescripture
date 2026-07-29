@@ -105,11 +105,17 @@ public final class TriggerPolicy {
 
         // Priority moments (death, diamonds, first-times) get a shorter floor so
         // that e.g. dying moments after a diamond find is still allowed to speak.
-        long globalMs = (spec.priority() ? config.globalPriorityCooldownSeconds
-                : config.globalCooldownSeconds) * 1000L;
-        Long lastShown = lastPresentation.get(player);
-        if (lastShown != null && now - lastShown < globalMs) {
-            return Decision.suppress("global_cooldown");
+        // Death is exempt altogether: a near-death verse fires moments before the
+        // death that follows it, and letting the smaller moment mute the larger
+        // one leaves a verse about deliverance standing over a corpse. Death has
+        // its own pacing above, so this cannot become spam.
+        if (!DEATH.equals(ctx.eventKey())) {
+            long globalMs = (spec.priority() ? config.globalPriorityCooldownSeconds
+                    : config.globalCooldownSeconds) * 1000L;
+            Long lastShown = lastPresentation.get(player);
+            if (lastShown != null && now - lastShown < globalMs) {
+                return Decision.suppress("global_cooldown");
+            }
         }
 
         if (sessionCounts.getOrDefault(player, 0) >= config.sessionCap) {

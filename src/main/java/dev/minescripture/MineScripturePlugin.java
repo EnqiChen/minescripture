@@ -118,7 +118,7 @@ public final class MineScripturePlugin extends JavaPlugin {
         DayCycleClock dayCycle = new DayCycleClock(service, playerState);
         pm.registerEvents(new LifecycleListener(this, service, journal, moments, dataDir), this);
         pm.registerEvents(new DeathListener(service, moments, dayCycle), this);
-        pm.registerEvents(new SurvivalListener(service, dayCycle), this);
+        pm.registerEvents(new SurvivalListener(service, dayCycle, this), this);
         pm.registerEvents(new WorldListener(service), this);
         pm.registerEvents(new MilestoneListener(service), this);
         Bukkit.getScheduler().runTaskTimer(this, dayCycle, 100L, 100L);
