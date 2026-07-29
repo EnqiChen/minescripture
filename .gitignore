@@ -21,3 +21,5 @@ tools/
 *.iml
 .vscode/
 .DS_Store
+
+# Local RCON convenience (password lives in run/server.properties, already ignored)
