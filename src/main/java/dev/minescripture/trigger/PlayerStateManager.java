@@ -97,6 +97,19 @@ public final class PlayerStateManager {
         save();
     }
 
+    /**
+     * Clears the once-ever flags so a first-time moment can fire again. Needed
+     * for rehearsal and filming: without it, a single test run permanently
+     * consumes first_join / first_nightfall / found_diamonds for that account.
+     */
+    public void resetMilestones(UUID playerId) {
+        PlayerFlags f = flags(playerId);
+        f.firstJoinSeen = false;
+        f.nightfallSeen = false;
+        f.diamondsFound = false;
+        save();
+    }
+
     public boolean isMuted(UUID playerId) {
         return flags(playerId).muted;
     }

@@ -1,5 +1,11 @@
 # MineScripture configuration
 #
+# config_version is how the plugin knows this file predates a change to the
+# shipped defaults. Bump it whenever a default VALUE changes (not just when keys
+# are added); on startup an older file is backed up and replaced, because a stale
+# value silently overriding a fix is almost impossible to notice from in-game.
+config_version: 2
+#
 # API keys: leave these empty and use environment variables instead (recommended):
 #   MSC_YVP_KEY      - YouVersion Platform app key
 #   MSC_GLOO_ID      - Gloo AI Studio client id

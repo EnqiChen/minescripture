@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public final class AdminCommand implements TabExecutor {
 
     private static final List<String> SUBCOMMANDS =
-            List.of("explain", "trigger", "stats", "demo", "reload", "prefetch");
+            List.of("explain", "trigger", "stats", "demo", "reset", "reload", "prefetch");
 
     private record DemoEvent(String key, String detail, long minutesAgo) {
     }
@@ -80,10 +80,11 @@ public final class AdminCommand implements TabExecutor {
             case "trigger" -> trigger(sender, args, false);
             case "demo" -> trigger(sender, args, true);
             case "stats" -> stats(sender);
+            case "reset" -> reset(sender);
             case "reload" -> reload(sender);
             case "prefetch" -> prefetch(sender);
             default -> sender.sendMessage(Component.text(
-                    "/msc <explain|trigger|stats|demo|reload|prefetch>", NamedTextColor.GRAY));
+                    "/msc <explain|trigger|stats|demo|reset|reload|prefetch>", NamedTextColor.GRAY));
         }
         return true;
     }
@@ -138,10 +139,18 @@ public final class AdminCommand implements TabExecutor {
             sender.sendMessage(Component.text("Demo story staged → running the real pipeline.",
                     NamedTextColor.GRAY));
         }
-        service.submit(new TriggerContext(player.getUniqueId(), event, cause,
+        var decision = service.submit(new TriggerContext(player.getUniqueId(), event, cause,
                 player.getWorld().getName(), null, now, Map.of()));
-        sender.sendMessage(Component.text("Submitted " + event
-                + (cause != null ? " (" + cause + ")" : "") + ".", NamedTextColor.GRAY));
+        if (decision.present()) {
+            sender.sendMessage(line("Fired " + event + ": ",
+                    decision.useAi() ? "asking Gloo for a fresh reading…" : "serving a curated verse ("
+                            + decision.reason() + ")"));
+        } else {
+            sender.sendMessage(Component.text("Suppressed " + event + " — " + decision.reason()
+                    + ("milestone_done".equals(decision.reason())
+                    ? ". This is a once-ever moment; use /msc reset to arm it again." : "."),
+                    NamedTextColor.RED));
+        }
     }
 
     private String defaultCause(String event) {
@@ -163,6 +172,18 @@ public final class AdminCommand implements TabExecutor {
         sender.sendMessage(line("Passage cache: ", passageCache.size() + " passages on disk/memory."));
         sender.sendMessage(line("Keys: ", "YouVersion " + (config.hasYouVersion() ? "OK" : "MISSING")
                 + " · Gloo " + (config.hasGloo() ? "OK" : "MISSING")));
+    }
+
+    /** Re-arms the once-ever moments so they can be rehearsed and filmed again. */
+    private void reset(CommandSender sender) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(Component.text("Players only.", NamedTextColor.GRAY));
+            return;
+        }
+        service.resetMilestones(player.getUniqueId());
+        sender.sendMessage(Component.text(
+                "first_join, first_nightfall and found_diamonds can fire again for you.",
+                NamedTextColor.GRAY));
     }
 
     private void reload(CommandSender sender) {

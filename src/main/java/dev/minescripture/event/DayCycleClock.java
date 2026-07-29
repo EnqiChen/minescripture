@@ -146,8 +146,14 @@ public final class DayCycleClock implements Runnable {
         }
     }
 
+    /**
+     * No upper bound on purpose: /time set night jumps straight to 18000, which a
+     * narrow window silently skips — and that command is exactly how you set up a
+     * night for the camera. Repeats are already prevented because the next tick
+     * sees last >= NIGHT_START.
+     */
     static boolean crossedIntoNight(long last, long now) {
-        return last < NIGHT_START && now >= NIGHT_START && now < NIGHT_START + 2_000;
+        return last < NIGHT_START && now >= NIGHT_START;
     }
 
     /**

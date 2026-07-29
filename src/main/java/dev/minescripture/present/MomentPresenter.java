@@ -12,6 +12,7 @@ import dev.minescripture.select.Interpretation;
 import dev.minescripture.select.LevityGuard;
 import dev.minescripture.select.RefValidator;
 import dev.minescripture.select.SessionVerseMemory;
+import dev.minescripture.trigger.PlayerStateManager;
 import dev.minescripture.trigger.StoryMemory;
 import dev.minescripture.trigger.TriggerContext;
 import dev.minescripture.trigger.TriggerPolicy;
@@ -30,6 +31,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.logging.Logger;
 
@@ -64,6 +66,7 @@ public final class MomentPresenter implements TriggerService.MomentSink {
     private final ScriptureClient scripture; // nullable: no YVP key → cache-only mode
     private final Presenter presenter;
     private final SessionJournal journal;
+    private final PlayerStateManager playerState;
     private final Random random = new Random();
 
     private Function<UUID, StoryMemory> stories = id -> null; // bound after TriggerService exists
@@ -75,7 +78,7 @@ public final class MomentPresenter implements TriggerService.MomentSink {
     public MomentPresenter(Plugin plugin, MineScriptureConfig config, FallbackPool pool, HumorPool humor,
                            TriggerPolicy policy, RefValidator validator, SessionVerseMemory verseMemory,
                            PassageCache passageCache, ScriptureClient scripture, Presenter presenter,
-                           SessionJournal journal) {
+                           SessionJournal journal, PlayerStateManager playerState) {
         this.plugin = plugin;
         this.log = plugin.getLogger();
         this.config = config;
@@ -88,6 +91,7 @@ public final class MomentPresenter implements TriggerService.MomentSink {
         this.scripture = scripture;
         this.presenter = presenter;
         this.journal = journal;
+        this.playerState = playerState;
     }
 
     /** Called once by the plugin after TriggerService is constructed. */
@@ -112,20 +116,46 @@ public final class MomentPresenter implements TriggerService.MomentSink {
                 policy.markLevity(ctx.playerId(), ctx.at());
                 ShownMoment moment = new ShownMoment(ctx, interp, origin, null, quip, null, ctx.at());
                 lastShown.put(ctx.playerId(), moment);
-                deliverTimed(ctx, player, p -> presenter.showLevity(p, quip));
+                deliverTimed(ctx, player, player.isDead(), p -> presenter.showLevity(p, quip));
                 return;
             }
         }
-        selectVerse(ctx, interp).thenAccept(passage -> {
-            if (passage.isEmpty()) {
-                log.warning("[" + ctx.eventKey() + "] no passage available (no key/cache?) — moment skipped");
-                return;
-            }
-            deliverVerse(ctx, interp, origin, passage.get(), deathDepth);
-        }).exceptionally(err -> {
-            log.warning("[" + ctx.eventKey() + "] presentation failed: " + err.getMessage());
-            return null;
-        });
+        // Whether the player is still on the death screen has to be decided HERE,
+        // on the main thread, while it is still true. Resolving a verse takes
+        // seconds, by which time they may well have respawned already.
+        boolean deadAtMoment = player.isDead();
+
+        selectVerse(ctx, interp)
+                // One deadline over the whole tail, not just the Gloo leg: ref
+                // validation and passage fetches are each their own round trip.
+                .orTimeout(config.timeoutSuddenMs, TimeUnit.MILLISECONDS)
+                .whenComplete((passage, err) -> onMain(() -> {
+                    if (err != null) {
+                        log.warning("[" + ctx.eventKey() + "] presentation failed: " + err);
+                        return;
+                    }
+                    if (passage == null || passage.isEmpty()) {
+                        log.warning("[" + ctx.eventKey() + "] no passage available (no key/cache?) — moment skipped");
+                        return;
+                    }
+                    deliverVerse(ctx, interp, origin, passage.get(), deathDepth, deadAtMoment);
+                }));
+    }
+
+    /**
+     * Everything downstream of an HTTP call completes on a ForkJoinPool worker,
+     * and almost the whole Bukkit API is main-thread-only. Hop back at the top of
+     * the continuation so no Bukkit call below here is ever made off-thread.
+     */
+    private void onMain(Runnable run) {
+        if (!plugin.isEnabled()) {
+            return;
+        }
+        if (Bukkit.isPrimaryThread()) {
+            run.run();
+        } else {
+            Bukkit.getScheduler().runTask(plugin, run);
+        }
     }
 
     // ---------------------------------------------------------- verse branch
@@ -185,8 +215,8 @@ public final class MomentPresenter implements TriggerService.MomentSink {
      * must describe the world they wake into, not the one they died in.
      */
     private void deliverVerse(TriggerContext ctx, Interpretation interp, TriggerService.Origin origin,
-                              Passage passage, int deathDepth) {
-        deliverTimed(ctx, Bukkit.getPlayer(ctx.playerId()), anchor -> {
+                              Passage passage, int deathDepth, boolean deadAtMoment) {
+        deliverTimed(ctx, Bukkit.getPlayer(ctx.playerId()), deadAtMoment, anchor -> {
             String frame = frameFor(ctx.eventKey(), anchor.getWorld().getTime());
             ShownMoment moment = new ShownMoment(ctx, interp, origin, passage, null, frame, ctx.at());
             for (Player recipient : recipients(ctx)) {
@@ -209,13 +239,15 @@ public final class MomentPresenter implements TriggerService.MomentSink {
     // ------------------------------------------------------------ timing
 
     /**
-     * Timing to the moment: a dead player's verse waits for the respawn screen
-     * to clear ("You awaken at dawn."); diamonds get a deliberate one-beat
-     * delay that reads as reverence, not lag; everything else shows now.
-     * Always lands back on the main thread.
+     * Timing to the moment: a dead player's verse waits for the respawn screen to
+     * clear; diamonds get a deliberate one-beat delay that reads as reverence,
+     * not lag; everything else shows now. Callers are already on the main thread,
+     * so the liveness checks here are reliable.
      */
-    private void deliverTimed(TriggerContext ctx, Player player, java.util.function.Consumer<Player> action) {
+    private void deliverTimed(TriggerContext ctx, Player player, boolean deadAtMoment,
+                              java.util.function.Consumer<Player> action) {
         if (player == null) {
+            log.warning("[" + ctx.eventKey() + "] player left before the verse resolved — moment dropped");
             return;
         }
         Runnable run = () -> {
@@ -224,12 +256,17 @@ public final class MomentPresenter implements TriggerService.MomentSink {
                 action.accept(current);
             }
         };
-        if ("player_death".equals(ctx.eventKey()) && player.isDead()) {
-            pendingRespawn.put(ctx.playerId(), run);
+        // Resolving a verse takes seconds, so a player who died may already be
+        // back on their feet. Hold only if they are STILL on the death screen.
+        if ("player_death".equals(ctx.eventKey()) && (deadAtMoment || player.isDead())) {
+            if (player.isDead()) {
+                pendingRespawn.put(ctx.playerId(), run);
+                return;
+            }
+            sync(run, 20); // respawned while we were thinking — one breath, then speak
             return;
         }
         long delayTicks = switch (ctx.eventKey()) {
-            case "player_death" -> 20;   // one breath after respawn
             case "found_diamonds" -> 15; // the deliberate beat
             default -> 1;
         };
@@ -288,6 +325,10 @@ public final class MomentPresenter implements TriggerService.MomentSink {
                 out.add(anchor);
             }
         }
+        // World and pair moments are gated on one anchor player, so every other
+        // recipient reaches here ungated. Mute is a promise to the individual —
+        // honour it per person, not per broadcast.
+        out.removeIf(p -> playerState.isMuted(p.getUniqueId()));
         return out;
     }
 
@@ -329,6 +370,8 @@ public final class MomentPresenter implements TriggerService.MomentSink {
     }
 
     private void sync(Runnable run, long delayTicks) {
-        Bukkit.getScheduler().runTaskLater(plugin, run, delayTicks);
+        if (plugin.isEnabled()) {
+            Bukkit.getScheduler().runTaskLater(plugin, run, delayTicks);
+        }
     }
 }

@@ -100,6 +100,11 @@ public final class TriggerService {
         this.diagnostics = diagnostics;
     }
 
+    /** Re-arms once-ever moments for rehearsal and filming. */
+    public void resetMilestones(UUID playerId) {
+        playerState.resetMilestones(playerId);
+    }
+
     public StoryMemory story(UUID playerId) {
         return stories.computeIfAbsent(playerId, k -> new StoryMemory(System.currentTimeMillis()));
     }
@@ -122,12 +127,17 @@ public final class TriggerService {
         policy.clearSession(playerId);
     }
 
-    /** Entry point for every candidate moment. Safe to call from the main thread. */
-    public void submit(TriggerContext ctx) {
+    /**
+     * Entry point for every candidate moment. Safe to call from the main thread.
+     *
+     * @return the gate's decision, so admin commands can report what actually
+     *         happened instead of claiming success for a suppressed moment.
+     */
+    public TriggerPolicy.Decision submit(TriggerContext ctx) {
         EventSpec spec = specs.get(ctx.eventKey());
         if (spec == null) {
             count(suppressedByReason, "unknown_event");
-            return;
+            return TriggerPolicy.Decision.suppress("unknown_event");
         }
         StoryMemory story = story(ctx.playerId());
         boolean muted = playerState.isMuted(ctx.playerId());
@@ -144,7 +154,7 @@ public final class TriggerService {
                 story.recordCollapsed(ctx.eventKey());
             }
             count(suppressedByReason, decision.reason());
-            return;
+            return decision;
         }
 
         if (spec.once() == EventSpec.Once.PERSISTENT) {
@@ -159,6 +169,7 @@ public final class TriggerService {
         } else {
             predictable(ctx, story, decision, postVersion);
         }
+        return decision;
     }
 
     private void sudden(TriggerContext ctx, StoryMemory story, TriggerPolicy.Decision decision, long postVersion) {
@@ -202,6 +213,11 @@ public final class TriggerService {
                     .whenComplete((interp, err) -> {
                         if (err == null && interp != null) {
                             profileCache.put(ctx.playerId(), ctx.eventKey(), interp, postVersion, ctx.at());
+                        } else {
+                            // Silent restock failures leave the cache empty forever,
+                            // so every predictable moment quietly serves a default.
+                            diagnostics.accept("[" + ctx.eventKey() + "] background restock failed: "
+                                    + (err == null ? "no interpretation" : err.getClass().getSimpleName()));
                         }
                     });
         }

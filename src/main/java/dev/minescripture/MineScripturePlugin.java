@@ -37,6 +37,9 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
@@ -55,9 +58,13 @@ public final class MineScripturePlugin extends JavaPlugin {
     private TriggerService service;
     private PlayerStateManager playerState;
 
+    /** Bump whenever a shipped default VALUE changes; see config.yml. */
+    private static final int CONFIG_VERSION = 2;
+
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        migrateStaleConfig();
         MineScriptureConfig config = loadSettings();
         EventSpecs specs = EventSpecs.load(resource("events.json"));
         FallbackPool pool = FallbackPool.load(resource("fallback.json"));
@@ -97,7 +104,7 @@ public final class MineScripturePlugin extends JavaPlugin {
         SessionJournal journal = new SessionJournal();
         Presenter presenter = new Presenter(config);
         MomentPresenter moments = new MomentPresenter(this, config, pool, humor, policy, validator,
-                verseMemory, passageCache, scripture, presenter, journal);
+                verseMemory, passageCache, scripture, presenter, journal, playerState);
 
         service = new TriggerService(config, specs, policy, pool, new MomentProfileCache(),
                 playerState, interpreter, moments, task -> {
@@ -151,6 +158,32 @@ public final class MineScripturePlugin extends JavaPlugin {
         CompletableFuture.allOf(futures).whenComplete((v, err) ->
                 getLogger().info("Fallback pool warm: " + ok.get() + "/" + refs.size()
                         + " passages cached."));
+    }
+
+    /**
+     * Bukkit's saveDefaultConfig() does nothing when the file already exists, so
+     * a change to a shipped default never reaches an existing install. That is
+     * not a theoretical problem: a stale timeout sat on a test server overriding
+     * a fix, and from in-game it looked exactly like the fix hadn't worked.
+     * An out-of-date file is therefore backed up and replaced, loudly.
+     */
+    private void migrateStaleConfig() {
+        int onDisk = getConfig().getInt("config_version", 1);
+        if (onDisk >= CONFIG_VERSION) {
+            return;
+        }
+        Path dir = getDataFolder().toPath();
+        Path backup = dir.resolve("config.v" + onDisk + ".bak.yml");
+        try {
+            Files.copy(dir.resolve("config.yml"), backup, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            getLogger().warning("Could not back up the old config.yml: " + e.getMessage());
+        }
+        saveResource("config.yml", true);
+        reloadConfig();
+        getLogger().warning("config.yml was version " + onDisk + ", this build ships version "
+                + CONFIG_VERSION + ". It has been replaced with current defaults; your old file is "
+                + backup.getFileName() + ". Re-apply any customisations you had.");
     }
 
     private MineScriptureConfig loadSettings() {

@@ -89,7 +89,7 @@ class DayCycleClockTest {
         assertTrue(DayCycleClock.crossedIntoNight(12_900, 13_100));
         assertFalse(DayCycleClock.crossedIntoNight(13_100, 13_400), "already night");
         assertFalse(DayCycleClock.crossedIntoNight(11_000, 11_500), "still day");
-        assertFalse(DayCycleClock.crossedIntoNight(12_900, 20_000), "stale tick, not the crossing");
+        assertTrue(DayCycleClock.crossedIntoNight(12_900, 20_000), "/time set night must still count");
     }
 
     @Test
