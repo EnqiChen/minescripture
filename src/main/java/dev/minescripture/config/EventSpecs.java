@@ -33,7 +33,8 @@ public final class EventSpecs {
                     JsonUtil.integer(e, "debounce_s", 0),
                     parseOnce(JsonUtil.str(e, "once", "none")),
                     "world".equalsIgnoreCase(JsonUtil.str(e, "scope", "player"))
-                            ? EventSpec.Scope.WORLD : EventSpec.Scope.PLAYER
+                            ? EventSpec.Scope.WORLD : EventSpec.Scope.PLAYER,
+                    JsonUtil.bool(e, "levity", false)
             ));
         }
         return new EventSpecs(out);

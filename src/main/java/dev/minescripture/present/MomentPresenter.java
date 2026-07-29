@@ -1,5 +1,7 @@
 package dev.minescripture.present;
 
+import dev.minescripture.config.EventSpec;
+import dev.minescripture.config.EventSpecs;
 import dev.minescripture.config.FallbackPool;
 import dev.minescripture.config.HumorPool;
 import dev.minescripture.config.MineScriptureConfig;
@@ -67,6 +69,7 @@ public final class MomentPresenter implements TriggerService.MomentSink {
     private final Presenter presenter;
     private final SessionJournal journal;
     private final PlayerStateManager playerState;
+    private final EventSpecs specs;
     private final Random random = new Random();
 
     private Function<UUID, StoryMemory> stories = id -> null; // bound after TriggerService exists
@@ -78,7 +81,7 @@ public final class MomentPresenter implements TriggerService.MomentSink {
     public MomentPresenter(Plugin plugin, MineScriptureConfig config, FallbackPool pool, HumorPool humor,
                            TriggerPolicy policy, RefValidator validator, SessionVerseMemory verseMemory,
                            PassageCache passageCache, ScriptureClient scripture, Presenter presenter,
-                           SessionJournal journal, PlayerStateManager playerState) {
+                           SessionJournal journal, PlayerStateManager playerState, EventSpecs specs) {
         this.plugin = plugin;
         this.log = plugin.getLogger();
         this.config = config;
@@ -92,6 +95,7 @@ public final class MomentPresenter implements TriggerService.MomentSink {
         this.presenter = presenter;
         this.journal = journal;
         this.playerState = playerState;
+        this.specs = specs;
     }
 
     /** Called once by the plugin after TriggerService is constructed. */
@@ -107,10 +111,12 @@ public final class MomentPresenter implements TriggerService.MomentSink {
         if (player == null) {
             return;
         }
-        // Levity branch: Gloo judged this moment comedic. Humor replaces the
-        // verse for THIS moment only; it never fires from curated defaults
-        // (they are never tone-light) and never on meaningful moments.
-        if (interp.isLight() && config.levity && policy.levityAllowed(ctx.playerId(), ctx.at())) {
+        // Levity branch: Gloo judged this moment comedic. Its tone judgement is
+        // necessary but not sufficient — a live call once called a first diamond
+        // find "lighthearted", and a discovery is never a joke however the model
+        // reports it. Only mishap-shaped events are eligible at all.
+        if (interp.isLight() && config.levity && levityEligible(ctx.eventKey())
+                && policy.levityAllowed(ctx.playerId(), ctx.at())) {
             String quip = chooseQuip(ctx, interp);
             if (quip != null) {
                 policy.markLevity(ctx.playerId(), ctx.at());
@@ -287,6 +293,11 @@ public final class MomentPresenter implements TriggerService.MomentSink {
     }
 
     // ------------------------------------------------------------ levity
+
+    private boolean levityEligible(String eventKey) {
+        EventSpec spec = specs.get(eventKey);
+        return spec != null && spec.levityEligible();
+    }
 
     /** AI quip if allowed and it survives LevityGuard; else curated pool. */
     private String chooseQuip(TriggerContext ctx, Interpretation interp) {

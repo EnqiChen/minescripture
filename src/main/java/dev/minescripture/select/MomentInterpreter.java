@@ -55,10 +55,18 @@ public final class MomentInterpreter implements TriggerService.InterpretationSou
             Any other value is invalid and will be discarded.
 
             QUIP RULES (only when tone is "light"):
+            - It must be BIBLE-FLAVOURED. Lean on a biblical person, place or story —
+              Jonah, Balaam's donkey, Jericho, the Red Sea, Daniel's lions, Noah's flood —
+              or on the cadence of a proverb. A purely Minecraft joke with no scriptural
+              texture is not what this is for.
+            - Set that against what just happened to the player. The humour lives in the
+              gap between the two: "Even Balaam's donkey would have seen that cactus."
             - Max 120 characters, plain text only.
-            - No quotation marks, no book names, no digits, and never a chapter:verse citation.
-            - Keep the humor dry, observational, and grounded in the game's reality. Strictly avoid cheesy puns.
-            - Gentle and kind — a smile, never mockery, never presented as Scripture.
+            - No quotation marks. No BOOK titles (Genesis, John, Psalms) and no digits, so
+              it can never read as a citation — but biblical NAMES are exactly what you want.
+            - Dry and observational. No cheesy puns, no exclamation marks.
+            - Gentle and kind — a smile at the mishap, never mockery of the player, and
+              never mockery of Scripture.
 
             Tone judgment matters: a comedic mishap (cactus hug, falling into your own farm pit) is "light";
             genuine loss, first-time wonder, danger survived, and fellowship are never "light".

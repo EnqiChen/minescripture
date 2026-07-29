@@ -79,19 +79,22 @@ def build(c, reset):
     c.run(f"kill @e[type=minecraft:wolf,distance=..40,x={BASE_X},y={BASE_Y},z={BASE_Z}]")
     c.run(f"summon minecraft:wolf {BASE_X - 4} {BASE_Y} {BASE_Z - 4}")
 
-    say("mine shaft down to the diamonds")
-    c.run(f"fill {MINE_X} {CAVE_Y} {MINE_Z} {MINE_X} {BASE_Y + 1} {MINE_Z} minecraft:air")
-    c.run(f"fill {MINE_X + 1} {CAVE_Y} {MINE_Z} {MINE_X + 1} {BASE_Y} {MINE_Z} minecraft:stone")
-    c.run(f"fill {MINE_X} {CAVE_Y} {MINE_Z} {MINE_X} {BASE_Y} {MINE_Z} "
-          f"minecraft:ladder[facing=west]")
-    # a lip so nobody walks into the shaft by accident
-    c.run(f"setblock {MINE_X} {BASE_Y + 1} {MINE_Z} minecraft:air")
-
+    # Chamber FIRST. Carving it afterwards ate the bottom of the shaft, ladders
+    # and backing wall together, and left a climb with no way back up.
     say("diamond chamber + lava pool")
     c.run(f"fill {MINE_X - 4} {CAVE_Y} {MINE_Z - 4} {MINE_X + 4} {CAVE_Y + 3} {MINE_Z + 4} "
           f"minecraft:air")
     c.run(f"fill {MINE_X - 5} {CAVE_Y - 1} {MINE_Z - 5} {MINE_X + 5} {CAVE_Y - 1} {MINE_Z + 5} "
           f"minecraft:deepslate")
+
+    say("mine shaft down to the diamonds")
+    c.run(f"fill {MINE_X} {CAVE_Y} {MINE_Z} {MINE_X} {BASE_Y + 1} {MINE_Z} minecraft:air")
+    # Backing wall must reach the chamber floor or the lowest ladders pop off.
+    c.run(f"fill {MINE_X + 1} {CAVE_Y} {MINE_Z} {MINE_X + 1} {BASE_Y} {MINE_Z} minecraft:stone")
+    c.run(f"fill {MINE_X} {CAVE_Y} {MINE_Z} {MINE_X} {BASE_Y} {MINE_Z} "
+          f"minecraft:ladder[facing=west]")
+    # a lip so nobody walks into the shaft by accident
+    c.run(f"setblock {MINE_X} {BASE_Y + 1} {MINE_Z} minecraft:air")
     for dx, dz in [(-2, -2), (-2, -1), (-3, -2), (-1, -3), (-3, -1)]:
         c.run(f"setblock {MINE_X + dx} {CAVE_Y} {MINE_Z + dz} minecraft:deepslate_diamond_ore")
     c.run(f"setblock {MINE_X - 2} {CAVE_Y + 2} {MINE_Z - 2} minecraft:torch")

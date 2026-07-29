@@ -1,5 +1,5 @@
 {
-  "_comment": "Event specs. path: 'predictable' = cache-first async; 'sudden' = fresh interpretation with bounded 2.5s wait (two-path timing). tier drives Presenter format. priority events still get AI when over budget.",
+  "_comment": "levity: may this moment ever be answered with humour? Only mishaps qualify — a discovery or a first time is never a joke, whatever tone the model reports. Event specs. path: 'predictable' = cache-first async; 'sudden' = fresh interpretation with bounded 2.5s wait (two-path timing). tier drives Presenter format. priority events still get AI when over budget.",
   "events": {
     "first_join":          { "path": "predictable", "tier": "major",    "priority": true,  "cooldown_s": 0,    "once": "persistent" },
     "first_nightfall":     { "path": "predictable", "tier": "standard", "priority": true,  "cooldown_s": 0,    "once": "persistent" },
@@ -7,9 +7,9 @@
     "sheltered_till_dawn": { "path": "predictable", "tier": "minor",    "priority": false, "cooldown_s": 3600 },
     "eating_bread":        { "path": "predictable", "tier": "minor",    "priority": false, "cooldown_s": 1800 },
     "taming":              { "path": "predictable", "tier": "standard", "priority": false, "cooldown_s": 1800 },
-    "low_health_survival": { "path": "sudden",      "tier": "standard", "priority": false, "cooldown_s": 600 },
+    "low_health_survival": { "path": "sudden",      "tier": "standard", "priority": false, "cooldown_s": 600, "levity": true },
     "found_diamonds":      { "path": "sudden",      "tier": "major",    "priority": true,  "cooldown_s": 0,    "once": "persistent", "debounce_s": 300 },
-    "player_death":        { "path": "sudden",      "tier": "major",    "priority": true,  "cooldown_s": 60 },
+    "player_death":        { "path": "sudden",      "tier": "major",    "priority": true,  "cooldown_s": 60, "levity": true },
     "sleep":               { "path": "predictable", "tier": "minor",    "priority": false, "cooldown_s": 1200 },
     "thunderstorm":        { "path": "predictable", "tier": "standard", "priority": false, "cooldown_s": 1800, "scope": "world" },
     "fellowship":          { "path": "predictable", "tier": "standard", "priority": false, "cooldown_s": 0,    "once": "session_pair" }

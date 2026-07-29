@@ -104,7 +104,7 @@ public final class MineScripturePlugin extends JavaPlugin {
         SessionJournal journal = new SessionJournal();
         Presenter presenter = new Presenter(config);
         MomentPresenter moments = new MomentPresenter(this, config, pool, humor, policy, validator,
-                verseMemory, passageCache, scripture, presenter, journal, playerState);
+                verseMemory, passageCache, scripture, presenter, journal, playerState, specs);
 
         service = new TriggerService(config, specs, policy, pool, new MomentProfileCache(),
                 playerState, interpreter, moments, task -> {

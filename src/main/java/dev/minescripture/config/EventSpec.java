@@ -9,7 +9,8 @@ public record EventSpec(
         int cooldownSeconds,
         int debounceSeconds,
         Once once,
-        Scope scope
+        Scope scope,
+        boolean levityEligible
 ) {
     /** Two-path timing: predictable = cache-first async; sudden = fresh bounded interpretation. */
     public enum Path { PREDICTABLE, SUDDEN }
