@@ -103,7 +103,14 @@
     },
     "player_death": {
       "refs": ["LAM.3.22-23", "ISA.43.2", "PSA.23.4"],
-      "frame": "You awaken at dawn.",
+      "frame": "You awaken again.",
+      "_frames_comment": "Chosen by the world's clock at the moment the verse is shown, so the line never claims a time of day that isn't true.",
+      "frames": {
+        "dawn":  "You awaken at dawn.",
+        "day":   "You awaken, and the day is still bright.",
+        "dusk":  "You awaken as the light fails.",
+        "night": "You awaken in the dark."
+      },
       "interpretation": { "resonance": "loss", "emotional_arc": "setback_to_hope", "emphasis": "comfort", "tone": "solemn" }
     },
     "sleep": {

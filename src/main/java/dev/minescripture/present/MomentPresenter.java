@@ -121,9 +121,7 @@ public final class MomentPresenter implements TriggerService.MomentSink {
                 log.warning("[" + ctx.eventKey() + "] no passage available (no key/cache?) — moment skipped");
                 return;
             }
-            String frame = frameFor(ctx.eventKey());
-            ShownMoment moment = new ShownMoment(ctx, interp, origin, passage.get(), null, frame, ctx.at());
-            deliverVerse(ctx, moment, deathDepth);
+            deliverVerse(ctx, interp, origin, passage.get(), deathDepth);
         }).exceptionally(err -> {
             log.warning("[" + ctx.eventKey() + "] presentation failed: " + err.getMessage());
             return null;
@@ -181,8 +179,16 @@ public final class MomentPresenter implements TriggerService.MomentSink {
                         : fetchFirstAvailable(refs, index + 1));
     }
 
-    private void deliverVerse(TriggerContext ctx, ShownMoment moment, int deathDepth) {
+    /**
+     * The frame is resolved here rather than earlier: on the main thread, at the
+     * instant the player actually reads it. A death verse held back until respawn
+     * must describe the world they wake into, not the one they died in.
+     */
+    private void deliverVerse(TriggerContext ctx, Interpretation interp, TriggerService.Origin origin,
+                              Passage passage, int deathDepth) {
         deliverTimed(ctx, Bukkit.getPlayer(ctx.playerId()), anchor -> {
+            String frame = frameFor(ctx.eventKey(), anchor.getWorld().getTime());
+            ShownMoment moment = new ShownMoment(ctx, interp, origin, passage, null, frame, ctx.at());
             for (Player recipient : recipients(ctx)) {
                 show(recipient, ctx, moment, deathDepth);
                 markSeen(recipient.getUniqueId(), moment);
@@ -294,9 +300,9 @@ public final class MomentPresenter implements TriggerService.MomentSink {
         }
     }
 
-    private String frameFor(String eventKey) {
+    private String frameFor(String eventKey, long worldTime) {
         FallbackPool.EventDefault defaults = pool.defaultsFor(eventKey);
-        return defaults == null ? "" : defaults.frame();
+        return defaults == null ? "" : defaults.frameFor(FallbackPool.phaseOf(worldTime));
     }
 
     /**

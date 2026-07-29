@@ -24,7 +24,33 @@ public final class FallbackPool {
     public record VerseMeta(String ref, String display, Set<String> events, Set<String> themes, String tone) {
     }
 
-    public record EventDefault(List<String> refs, String frame, Interpretation interpretation) {
+    /**
+     * @param framesByPhase optional time-of-day variants of {@code frame}, keyed
+     *                      dawn/day/dusk/night. A frame must never claim a time
+     *                      of day that isn't true when the player reads it.
+     */
+    public record EventDefault(List<String> refs, String frame, Map<String, String> framesByPhase,
+                               Interpretation interpretation) {
+
+        /** The variant for this phase of the day, or the neutral frame. */
+        public String frameFor(String phase) {
+            return framesByPhase.getOrDefault(phase, frame);
+        }
+    }
+
+    /** Minecraft's 24000-tick day, in the words a frame would use. */
+    public static String phaseOf(long worldTime) {
+        long t = ((worldTime % 24_000L) + 24_000L) % 24_000L;
+        if (t >= 23_000L || t < 2_000L) {
+            return "dawn";
+        }
+        if (t < 11_500L) {
+            return "day";
+        }
+        if (t < 13_500L) {
+            return "dusk";
+        }
+        return "night";
     }
 
     private final Map<String, VerseMeta> byRef;
@@ -56,9 +82,17 @@ public final class FallbackPool {
                 JsonObject d = defs.getAsJsonObject(event);
                 JsonObject interp = d.getAsJsonObject("interpretation");
                 List<String> refs = JsonUtil.strList(d, "refs");
+                Map<String, String> frames = new LinkedHashMap<>();
+                JsonObject framesJson = d.getAsJsonObject("frames");
+                if (framesJson != null) {
+                    for (String phase : framesJson.keySet()) {
+                        frames.put(phase, framesJson.get(phase).getAsString());
+                    }
+                }
                 defaults.put(event, new EventDefault(
                         List.copyOf(refs),
                         JsonUtil.str(d, "frame", ""),
+                        Map.copyOf(frames),
                         new Interpretation(
                                 JsonUtil.str(interp, "resonance", "presence"),
                                 JsonUtil.str(interp, "emotional_arc", "moment"),
