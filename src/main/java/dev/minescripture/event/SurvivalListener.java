@@ -32,8 +32,8 @@ public final class SurvivalListener implements Listener {
     /** Three hearts or less, and still standing. */
     private static final double NEAR_DEATH_HEALTH = 6.0;
 
-    /** Long enough for lava or fire to finish the job if it is going to. */
-    private static final long SURVIVAL_CONFIRM_TICKS = 60L;
+    /** Five seconds; lava burn outlasts anything shorter. */
+    private static final long SURVIVAL_CONFIRM_TICKS = 100L;
 
     private final TriggerService service;
     private final DayCycleClock dayCycle;
@@ -69,10 +69,17 @@ public final class SurvivalListener implements Listener {
      * with a verse about deliverance lands as mockery. Wait a beat and check.
      */
     private void confirmSurvival(UUID playerId, String cause) {
+        // Compare death counts rather than just asking "are you alive now?".
+        // Lava burns for far longer than the wait, and a player who dies and
+        // respawns quickly looks perfectly healthy by the time we check.
+        int deathsBefore = service.story(playerId).deaths();
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             Player player = Bukkit.getPlayer(playerId);
             if (player == null || player.isDead() || player.getHealth() <= 0) {
-                return; // they did not, in fact, survive it
+                return;
+            }
+            if (service.story(playerId).deaths() > deathsBefore) {
+                return; // they died in the meantime; the death is the moment now
             }
             service.submit(TriggerContext.of(playerId, "low_health_survival",
                     System.currentTimeMillis()).withCause(cause));

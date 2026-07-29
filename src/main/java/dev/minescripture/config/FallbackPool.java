@@ -38,6 +38,15 @@ public final class FallbackPool {
         }
     }
 
+    /**
+     * Underground there is no sky to describe, so the time of day is not a fact
+     * the player can check. Dying in a deep cave at dawn and being told "you
+     * awaken at dawn" is true and still absurd.
+     */
+    public static String phaseOf(long worldTime, boolean canSeeSky) {
+        return canSeeSky ? phaseOf(worldTime) : "underground";
+    }
+
     /** Minecraft's 24000-tick day, in the words a frame would use. */
     public static String phaseOf(long worldTime) {
         long t = ((worldTime % 24_000L) + 24_000L) % 24_000L;

@@ -109,7 +109,8 @@
         "dawn":  "You awaken at dawn.",
         "day":   "You awaken, and the day is still bright.",
         "dusk":  "You awaken as the light fails.",
-        "night": "You awaken in the dark."
+        "night": "You awaken in the dark.",
+        "underground": "You awaken far from the light."
       },
       "interpretation": { "resonance": "loss", "emotional_arc": "setback_to_hope", "emphasis": "comfort", "tone": "solemn" }
     },

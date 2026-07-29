@@ -223,7 +223,8 @@ public final class MomentPresenter implements TriggerService.MomentSink {
     private void deliverVerse(TriggerContext ctx, Interpretation interp, TriggerService.Origin origin,
                               Passage passage, int deathDepth, boolean deadAtMoment) {
         deliverTimed(ctx, Bukkit.getPlayer(ctx.playerId()), deadAtMoment, anchor -> {
-            String frame = frameFor(ctx.eventKey(), anchor.getWorld().getTime());
+            String frame = frameFor(ctx.eventKey(), anchor.getWorld().getTime(),
+                    anchor.getLocation().getBlock().getLightFromSky() > 0);
             ShownMoment moment = new ShownMoment(ctx, interp, origin, passage, null, frame, ctx.at());
             for (Player recipient : recipients(ctx)) {
                 show(recipient, ctx, moment, deathDepth);
@@ -352,9 +353,10 @@ public final class MomentPresenter implements TriggerService.MomentSink {
         }
     }
 
-    private String frameFor(String eventKey, long worldTime) {
+    private String frameFor(String eventKey, long worldTime, boolean canSeeSky) {
         FallbackPool.EventDefault defaults = pool.defaultsFor(eventKey);
-        return defaults == null ? "" : defaults.frameFor(FallbackPool.phaseOf(worldTime));
+        return defaults == null ? ""
+                : defaults.frameFor(FallbackPool.phaseOf(worldTime, canSeeSky));
     }
 
     /**
