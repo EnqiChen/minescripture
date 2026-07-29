@@ -58,6 +58,7 @@ public final class TriggerService {
     private final InterpretationSource source;
     private final MomentSink sink;
     private final Executor mainExecutor;
+    private final java.util.function.Consumer<String> diagnostics;
 
     private final Map<UUID, StoryMemory> stories = new ConcurrentHashMap<>();
     private final Map<String, AtomicInteger> firedByEvent = new ConcurrentHashMap<>();
@@ -73,6 +74,20 @@ public final class TriggerService {
                           InterpretationSource source,
                           MomentSink sink,
                           Executor mainExecutor) {
+        this(config, specs, policy, fallback, profileCache, playerState, source, sink, mainExecutor, msg -> {
+        });
+    }
+
+    public TriggerService(MineScriptureConfig config,
+                          EventSpecs specs,
+                          TriggerPolicy policy,
+                          FallbackPool fallback,
+                          MomentProfileCache profileCache,
+                          PlayerStateManager playerState,
+                          InterpretationSource source,
+                          MomentSink sink,
+                          Executor mainExecutor,
+                          java.util.function.Consumer<String> diagnostics) {
         this.config = config;
         this.specs = specs;
         this.policy = policy;
@@ -82,6 +97,7 @@ public final class TriggerService {
         this.source = source;
         this.sink = sink;
         this.mainExecutor = mainExecutor;
+        this.diagnostics = diagnostics;
     }
 
     public StoryMemory story(UUID playerId) {
@@ -147,12 +163,21 @@ public final class TriggerService {
 
     private void sudden(TriggerContext ctx, StoryMemory story, TriggerPolicy.Decision decision, long postVersion) {
         if (decision.useAi() && source != null) {
+            long startedAt = System.currentTimeMillis();
             source.interpret(ctx, story)
                     .orTimeout(config.timeoutSuddenMs, TimeUnit.MILLISECONDS)
                     .whenComplete((interp, err) -> {
+                        long tookMs = System.currentTimeMillis() - startedAt;
                         if (err != null || interp == null) {
+                            // Never let this be silent: a fallback that looks like
+                            // success is how "the AI isn't working" hides for days.
+                            diagnostics.accept("[" + ctx.eventKey() + "] fell back to a curated verse after "
+                                    + tookMs + "ms (cap " + config.timeoutSuddenMs + "ms): "
+                                    + (err == null ? "no interpretation" : err.getClass().getSimpleName()));
                             deliver(ctx, defaultFor(ctx), Origin.DEFAULT, decision.deathDepth());
                         } else {
+                            diagnostics.accept("[" + ctx.eventKey() + "] interpreted in " + tookMs
+                                    + "ms → " + interp.emphasis() + " / " + interp.tone());
                             profileCache.put(ctx.playerId(), ctx.eventKey(), interp, postVersion, ctx.at());
                             deliver(ctx, interp, Origin.GLOO, decision.deathDepth());
                         }

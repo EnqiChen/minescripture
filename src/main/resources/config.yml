@@ -18,8 +18,11 @@ gloo:
   # tradition value at request time; admins may set a specific tradition.
   tradition: broad_christian
   temperature: 0.4
-  timeout_ms_sudden: 2500       # hard cap for death/diamonds/low-health path
-  timeout_ms_background: 4000   # background restock of cached interpretations
+  # Measured Gloo latency for a real interpretation is ~6.5-7s, so the sudden cap
+  # has to clear that or every death silently falls back to a curated verse. The
+  # respawn screen absorbs most of the wait; the verse is held until you respawn.
+  timeout_ms_sudden: 9000       # hard cap for death/diamonds/low-health path
+  timeout_ms_background: 12000  # background restock of cached interpretations
 
 # Levity: on tone-light moments (comedic deaths), serve humor instead of a verse.
 # levity_ai additionally allows a short AI-generated quip (clearly separated from

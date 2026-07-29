@@ -104,7 +104,7 @@ public final class MineScripturePlugin extends JavaPlugin {
             if (isEnabled()) {
                 Bukkit.getScheduler().runTask(this, task);
             }
-        });
+        }, msg -> getLogger().info(msg));
         moments.bindStories(service::story);
 
         PluginManager pm = getServer().getPluginManager();

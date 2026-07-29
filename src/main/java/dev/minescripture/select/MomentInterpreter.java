@@ -103,6 +103,48 @@ public final class MomentInterpreter implements TriggerService.InterpretationSou
         return JsonUtil.GSON.toJson(msg);
     }
 
+    /**
+     * Models invent tones. A live call returned "supportive_resilience", which a
+     * strict enum check silently flattened to "solemn" — and because Levity needs
+     * exactly "light", that made comedic moments unreachable. Rather than discard
+     * the judgment, map it onto the nearest tone we actually present. Same rule as
+     * everywhere else here: the AI is trusted for judgment, not for format.
+     */
+    static String normalizeTone(String raw) {
+        if (raw == null) {
+            return "solemn";
+        }
+        String t = raw.toLowerCase(Locale.ROOT);
+        if (TONES.contains(t)) {
+            return t;
+        }
+        if (containsAny(t, "light", "humor", "humour", "funny", "comic", "playful", "silly", "amus", "wry")) {
+            return "light";
+        }
+        if (containsAny(t, "awe", "wonder", "majest", "reveren", "glor", "sublime")) {
+            return "awe";
+        }
+        if (containsAny(t, "calm", "peace", "quiet", "still", "seren", "rest", "gentle")) {
+            return "calm";
+        }
+        if (containsAny(t, "encourag", "resilien", "hope", "strength", "persever", "support", "determin", "triumph")) {
+            return "encouraging";
+        }
+        if (containsAny(t, "warm", "tender", "affection", "comfort", "grateful", "gratitude", "joy")) {
+            return "warm";
+        }
+        return "solemn";
+    }
+
+    private static boolean containsAny(String haystack, String... needles) {
+        for (String n : needles) {
+            if (haystack.contains(n)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /** Lenient parse + shape validation. Null on anything unusable. */
     static Interpretation parse(String content) {
         JsonObject o = JsonUtil.firstJsonObject(content);
@@ -116,10 +158,7 @@ public final class MomentInterpreter implements TriggerService.InterpretationSou
         if (refs.size() > 4) {
             refs = refs.subList(0, 4);
         }
-        String tone = JsonUtil.str(o, "tone", "solemn").toLowerCase(Locale.ROOT);
-        if (!TONES.contains(tone)) {
-            tone = "solemn";
-        }
+        String tone = normalizeTone(JsonUtil.str(o, "tone", "solemn"));
         String quip = JsonUtil.str(o, "quip", null);
         if (!"light".equals(tone)) {
             quip = null; // quips exist only on light moments, by contract
