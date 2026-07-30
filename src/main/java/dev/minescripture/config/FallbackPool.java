@@ -29,8 +29,17 @@ public final class FallbackPool {
      *                      dawn/day/dusk/night. A frame must never claim a time
      *                      of day that isn't true when the player reads it.
      */
-    public record EventDefault(List<String> refs, String frame, Map<String, String> framesByPhase,
-                               Interpretation interpretation) {
+    public record EventDefault(List<String> refs, String frame, String title,
+                               Map<String, String> framesByPhase, Interpretation interpretation) {
+
+        /**
+         * Minecraft renders titles at roughly 4x scale, so anything approaching a
+         * sentence runs off the edge of the screen — worse at the GUI Scale a
+         * recording uses. Titles get a few words; the full frame goes to chat.
+         */
+        public String titleOrShortFrame() {
+            return title == null || title.isBlank() ? frame : title;
+        }
 
         /** The variant for this phase of the day, or the neutral frame. */
         public String frameFor(String phase) {
@@ -101,6 +110,7 @@ public final class FallbackPool {
                 defaults.put(event, new EventDefault(
                         List.copyOf(refs),
                         JsonUtil.str(d, "frame", ""),
+                        JsonUtil.str(d, "title", null),
                         Map.copyOf(frames),
                         new Interpretation(
                                 JsonUtil.str(interp, "resonance", "presence"),

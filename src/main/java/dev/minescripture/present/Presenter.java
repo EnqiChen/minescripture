@@ -27,9 +27,11 @@ import java.time.Duration;
  */
 public final class Presenter {
 
+    // Long enough to actually read a reference, short enough that the screen is
+    // never trapped. Play-testing found 3.5s too brief to take anything in.
     private static final Title.Times TITLE_TIMES = Title.Times.times(
             Duration.ofMillis(500),   // 10 ticks in
-            Duration.ofMillis(3500),  // 70 ticks stay
+            Duration.ofMillis(6000),  // 120 ticks stay
             Duration.ofMillis(1000)); // 20 ticks out
 
     private static final Sound CHIME = Sound.sound(
@@ -54,9 +56,9 @@ public final class Presenter {
         chime(player);
     }
 
-    public void showMajor(Player player, String frame, Passage passage) {
+    public void showMajor(Player player, String title, String frame, Passage passage) {
         player.showTitle(Title.title(
-                Component.text(frame, NamedTextColor.WHITE),
+                Component.text(title, NamedTextColor.WHITE),
                 Component.text(attribution(passage), NamedTextColor.GOLD),
                 TITLE_TIMES));
         chatBlock(player, frame, passage);

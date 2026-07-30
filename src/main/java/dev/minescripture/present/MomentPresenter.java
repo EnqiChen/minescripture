@@ -116,7 +116,7 @@ public final class MomentPresenter implements TriggerService.MomentSink {
         // find "lighthearted", and a discovery is never a joke however the model
         // reports it. Only mishap-shaped events are eligible at all.
         if (interp.isLight() && config.levity && levityEligible(ctx.eventKey())
-                && policy.levityAllowed(ctx.playerId(), ctx.at())) {
+                && (ctx.isDemo() || policy.levityAllowed(ctx.playerId(), ctx.at()))) {
             String quip = chooseQuip(ctx, interp);
             if (quip != null) {
                 policy.markLevity(ctx.playerId(), ctx.at());
@@ -237,7 +237,7 @@ public final class MomentPresenter implements TriggerService.MomentSink {
     private void show(Player player, TriggerContext ctx, ShownMoment moment, int deathDepth) {
         switch (tierOf(ctx.eventKey(), deathDepth)) {
             case "minor" -> presenter.showMinor(player, moment.passage());
-            case "major" -> presenter.showMajor(player, moment.frame(), moment.passage());
+            case "major" -> presenter.showMajor(player, titleFor(ctx.eventKey()), moment.frame(), moment.passage());
             default -> presenter.showStandard(player, moment.frame(), moment.passage());
         }
         journal.add(player.getUniqueId(), ctx.eventKey(), moment.passage());
@@ -351,6 +351,12 @@ public final class MomentPresenter implements TriggerService.MomentSink {
             story.addSeenRef(moment.passage().ref());
             story.countTheme(moment.interp().emphasis());
         }
+    }
+
+    /** A few words for the big on-screen line; the sentence stays in chat. */
+    private String titleFor(String eventKey) {
+        FallbackPool.EventDefault defaults = pool.defaultsFor(eventKey);
+        return defaults == null ? "" : defaults.titleOrShortFrame();
     }
 
     private String frameFor(String eventKey, long worldTime, boolean canSeeSky) {

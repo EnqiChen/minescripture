@@ -38,6 +38,39 @@ public final class AdminCommand implements TabExecutor {
      * pipeline. The player_death script is the same-event-different-story A/B
      * setup (death right after finding diamonds → perseverance, not comfort).
      */
+    /** A named beat: the event to fire, the cause to report, and the story behind it. */
+    private record Scenario(String label, String event, String cause, List<DemoEvent> story) {
+    }
+
+    /**
+     * Beats for the camera. Each stages a story that steers Gloo toward a
+     * particular register, then runs the real pipeline — the interpretation is
+     * genuinely the model's, only the history is arranged.
+     *
+     * The three the footage needs to cover: a weighty verse, an encouraging one,
+     * and a moment of humour.
+     */
+    private static final Map<String, Scenario> SCENARIOS = Map.of(
+            // Weighty: a long session ending in repeated loss, nothing to show for it.
+            "loss", new Scenario("a verse for loss", "player_death", "mob", List.of(
+                    new DemoEvent("first_join", null, 95),
+                    new DemoEvent("player_death", "mob", 41),
+                    new DemoEvent("low_health_survival", "mob", 22),
+                    new DemoEvent("player_death", "mob", 13))),
+            // Encouraging: died moments after the best thing that happened all night.
+            "perseverance", new Scenario("an encouraging verse", "player_death", "lava", List.of(
+                    new DemoEvent("first_join", null, 52),
+                    new DemoEvent("found_diamonds", "first diamonds", 3))),
+            // Humour: a quiet, uneventful session and then a thoroughly silly death.
+            "levity", new Scenario("a lighthearted moment", "player_death", "cactus", List.of(
+                    new DemoEvent("first_join", null, 30),
+                    new DemoEvent("eating_bread", null, 18),
+                    new DemoEvent("sleep", null, 11))),
+            // Wonder, for the diamond beat.
+            "wonder", new Scenario("a verse of wonder", "found_diamonds", null, List.of(
+                    new DemoEvent("first_join", null, 47),
+                    new DemoEvent("player_death", "fall", 19))));
+
     private static final Map<String, List<DemoEvent>> DEMO_SCRIPTS = Map.of(
             "player_death", List.of(
                     new DemoEvent("found_diamonds", "first diamonds", 8),
@@ -49,6 +82,11 @@ public final class AdminCommand implements TabExecutor {
                     new DemoEvent("first_nightfall", null, 15)),
             "first_nightfall", List.of(
                     new DemoEvent("first_join", null, 10)));
+
+    private static final List<String> EVENT_KEYS = List.of(
+            "first_join", "first_nightfall", "survived_the_night", "sheltered_till_dawn",
+            "eating_bread", "taming", "low_health_survival", "found_diamonds",
+            "player_death", "sleep", "thunderstorm", "fellowship");
 
     private final Plugin plugin;
     private final MineScriptureConfig config;
@@ -126,18 +164,30 @@ public final class AdminCommand implements TabExecutor {
         }
         String event = args[1].toLowerCase(Locale.ROOT);
         String cause = args.length > 2 ? args[2].toLowerCase(Locale.ROOT) : defaultCause(event);
+        // may be overridden by a named scenario below
         long now = System.currentTimeMillis();
         if (demo) {
+            Scenario scenario = SCENARIOS.get(event);
             StoryMemory story = service.story(player.getUniqueId());
-            for (DemoEvent scripted : DEMO_SCRIPTS.getOrDefault(event,
-                    List.of(new DemoEvent("first_join", null, 30)))) {
+            List<DemoEvent> script = scenario != null ? scenario.story()
+                    : DEMO_SCRIPTS.getOrDefault(event, List.of(new DemoEvent("first_join", null, 30)));
+            for (DemoEvent scripted : script) {
                 story.recordEvent(scripted.key(), scripted.detail(), now - scripted.minutesAgo() * 60_000L);
             }
-            if ("player_death".equals(event)) {
+            String firing = scenario != null ? scenario.event() : event;
+            if (scenario != null && scenario.cause() != null) {
+                cause = scenario.cause();
+            }
+            if ("player_death".equals(firing)) {
                 story.markLostItems();
             }
-            sender.sendMessage(Component.text("Demo story staged → running the real pipeline.",
-                    NamedTextColor.GRAY));
+            sender.sendMessage(line(scenario != null ? "Staging " + scenario.label() + ": " : "Staging: ",
+                    script.size() + " prior moments → real pipeline, pacing stood down"));
+            // Filming path: real story, real Gloo, real verification — but
+            // re-shootable, and it won't burn a once-ever milestone.
+            service.submitForFilming(new TriggerContext(player.getUniqueId(), firing, cause,
+                    player.getWorld().getName(), null, now, Map.of()));
+            return;
         }
         var decision = service.submit(new TriggerContext(player.getUniqueId(), event, cause,
                 player.getWorld().getName(), null, now, Map.of()));
@@ -225,7 +275,11 @@ public final class AdminCommand implements TabExecutor {
             return SUBCOMMANDS.stream()
                     .filter(s -> s.startsWith(args[0].toLowerCase(Locale.ROOT))).toList();
         }
-        if (args.length == 2 && ("trigger".equalsIgnoreCase(args[0]) || "demo".equalsIgnoreCase(args[0]))) {
+        if (args.length == 2 && "demo".equalsIgnoreCase(args[0])) {
+            return java.util.stream.Stream.concat(SCENARIOS.keySet().stream(), EVENT_KEYS.stream())
+                    .filter(s2 -> s2.startsWith(args[1].toLowerCase(Locale.ROOT))).sorted().toList();
+        }
+        if (args.length == 2 && "trigger".equalsIgnoreCase(args[0])) {
             return List.of("first_join", "first_nightfall", "survived_the_night", "sheltered_till_dawn",
                             "eating_bread",
                             "taming", "low_health_survival", "found_diamonds", "player_death",

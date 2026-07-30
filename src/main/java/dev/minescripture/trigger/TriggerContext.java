@@ -26,6 +26,17 @@ public record TriggerContext(
         return new TriggerContext(playerId, eventKey, null, null, null, at, Map.of());
     }
 
+    /** Demo takes bypass pacing so a beat can be re-shot until it lands. */
+    public boolean isDemo() {
+        return "true".equals(extras.get("demo"));
+    }
+
+    public TriggerContext asDemo() {
+        Map<String, String> next = new java.util.LinkedHashMap<>(extras);
+        next.put("demo", "true");
+        return new TriggerContext(playerId, eventKey, cause, worldKey, pairKey, at, next);
+    }
+
     public TriggerContext withCause(String newCause) {
         return new TriggerContext(playerId, eventKey, newCause, worldKey, pairKey, at, extras);
     }

@@ -172,6 +172,31 @@ public final class TriggerService {
         return decision;
     }
 
+    /**
+     * Filming path: runs the real pipeline — real story, real Gloo call, real
+     * verification — but skips pacing so a beat can be re-shot immediately, and
+     * does not burn once-ever milestones. Nothing about the interpretation is
+     * faked; only the gate is stood down.
+     */
+    public void submitForFilming(TriggerContext ctx) {
+        EventSpec spec = specs.get(ctx.eventKey());
+        if (spec == null) {
+            diagnostics.accept("unknown event: " + ctx.eventKey());
+            return;
+        }
+        TriggerContext demo = ctx.isDemo() ? ctx : ctx.asDemo();
+        StoryMemory story = story(demo.playerId());
+        story.recordEvent(demo.eventKey(), demo.cause(), demo.at());
+        long postVersion = story.storyVersion();
+        count(firedByEvent, demo.eventKey());
+        TriggerPolicy.Decision forced = new TriggerPolicy.Decision(true, true, "filming", 0);
+        if (spec.path() == EventSpec.Path.SUDDEN) {
+            sudden(demo, story, forced, postVersion);
+        } else {
+            predictable(demo, story, forced, postVersion);
+        }
+    }
+
     private void sudden(TriggerContext ctx, StoryMemory story, TriggerPolicy.Decision decision, long postVersion) {
         if (decision.useAi() && source != null) {
             long startedAt = System.currentTimeMillis();
