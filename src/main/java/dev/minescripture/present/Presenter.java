@@ -45,7 +45,7 @@ public final class Presenter {
 
     public void showMinor(Player player, Passage passage) {
         player.sendActionBar(Component.text()
-                .append(Component.text(passage.text() + "  ", NamedTextColor.WHITE))
+                .append(Component.text(passage.displayText(config.abridgeOverChars) + "  ", NamedTextColor.WHITE))
                 .append(Component.text("— " + attribution(passage), NamedTextColor.GOLD))
                 .build());
         chime(player);
@@ -79,7 +79,7 @@ public final class Presenter {
         if (frame != null && !frame.isBlank()) {
             player.sendMessage(Component.text(frame, NamedTextColor.GRAY, TextDecoration.ITALIC));
         }
-        player.sendMessage(Component.text(passage.text(), NamedTextColor.WHITE));
+        player.sendMessage(Component.text(passage.displayText(config.abridgeOverChars), NamedTextColor.WHITE));
         player.sendMessage(Component.text("— " + attribution(passage), NamedTextColor.GOLD));
     }
 

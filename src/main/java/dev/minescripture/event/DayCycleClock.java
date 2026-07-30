@@ -41,6 +41,8 @@ public final class DayCycleClock implements Runnable {
     private final Map<String, Long> lastTimeByWorld = new HashMap<>();
     private final Set<UUID> survivedSomething = ConcurrentHashMap.newKeySet();
     private final Set<UUID> presentInTheDark = ConcurrentHashMap.newKeySet();
+    /** Sticky until dawn: clearing a flag is not enough when the clock re-sets it. */
+    private final Set<UUID> sleptTonight = ConcurrentHashMap.newKeySet();
 
     public DayCycleClock(TriggerService service, PlayerStateManager playerState) {
         this.service = service;
@@ -73,7 +75,7 @@ public final class DayCycleClock implements Runnable {
     }
 
     void markIfNight(UUID playerId, long worldTime) {
-        if (worldTime >= NIGHT_START) {
+        if (worldTime >= NIGHT_START && !sleptTonight.contains(playerId)) {
             survivedSomething.add(playerId);
             presentInTheDark.add(playerId);
         }
@@ -87,13 +89,31 @@ public final class DayCycleClock implements Runnable {
         return presentInTheDark.contains(playerId);
     }
 
+    boolean sleptTonight(UUID playerId) {
+        return sleptTonight.contains(playerId);
+    }
+
+    /** Morning has been handled; the next night starts from nothing. */
+    void forgetNight() {
+        survivedSomething.clear();
+        presentInTheDark.clear();
+        sleptTonight.clear();
+    }
+
     /** Dying means you did not survive the night — the death has its own moment. */
     public void noteDeath(UUID playerId) {
         forget(playerId);
     }
 
-    /** Sleeping is opting out of the night, not enduring it; /verse sleep covers that. */
+    /**
+     * Sleeping is opting out of the night rather than enduring it, and the bed has
+     * its own verse. Clearing the flags is not sufficient: the clock re-adds every
+     * online player to presentInTheDark on each tick while it is still night, and
+     * a tick lands between entering the bed and the time skip completing. Without
+     * a sticky record, dawn then fired a second verse on top of the sleep one.
+     */
     public void noteSlept(UUID playerId) {
+        sleptTonight.add(playerId);
         forget(playerId);
     }
 
@@ -121,9 +141,13 @@ public final class DayCycleClock implements Runnable {
                 }
             }
 
-            // Simply being out there in the dark is its own kind of night.
+            // Simply being out there in the dark is its own kind of night —
+            // unless you went to bed, which is the opposite of being out in it.
             if (now >= NIGHT_START) {
-                world.getPlayers().forEach(p -> presentInTheDark.add(p.getUniqueId()));
+                world.getPlayers().stream()
+                        .map(Player::getUniqueId)
+                        .filter(id -> !sleptTonight.contains(id))
+                        .forEach(presentInTheDark::add);
             }
 
             if (crossedIntoDay(last, now)) {
@@ -140,8 +164,7 @@ public final class DayCycleClock implements Runnable {
                     }
                 }
                 // Anyone who logged off before dawn starts the next night clean.
-                survivedSomething.clear();
-                presentInTheDark.clear();
+                forgetNight();
             }
         }
     }

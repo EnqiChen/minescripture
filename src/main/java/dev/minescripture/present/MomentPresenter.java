@@ -233,7 +233,12 @@ public final class MomentPresenter implements TriggerService.MomentSink {
             String frame = frameFor(ctx.eventKey(), anchor.getWorld().getTime(),
                     anchor.getLocation().getBlock().getLightFromSky() > 0);
             ShownMoment moment = new ShownMoment(ctx, interp, origin, passage, null, null, frame, ctx.at());
-            for (Player recipient : recipients(ctx)) {
+            List<Player> to = recipients(ctx);
+            // Log every presentation. Without this a duplicate moment is invisible
+            // after the fact, which is exactly how a double sleep verse hid.
+            log.info("[" + ctx.eventKey() + "] shown to " + to.size() + ": "
+                    + passage.display() + " [" + origin + "]");
+            for (Player recipient : to) {
                 show(recipient, ctx, moment, deathDepth);
                 markSeen(recipient.getUniqueId(), moment);
             }

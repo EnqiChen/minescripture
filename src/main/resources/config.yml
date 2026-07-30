@@ -4,7 +4,7 @@
 # shipped defaults. Bump it whenever a default VALUE changes (not just when keys
 # are added); on startup an older file is backed up and replaced, because a stale
 # value silently overriding a fix is almost impossible to notice from in-game.
-config_version: 2
+config_version: 3
 #
 # API keys: leave these empty and use environment variables instead (recommended):
 #   MSC_YVP_KEY      - YouVersion Platform app key
@@ -58,3 +58,9 @@ deaths:
 
 presentation:
   chime: true
+  # Passages longer than this are shown in a shortened form when one exists.
+  # Gloo decides which words to drop and may ONLY delete — the result is checked
+  # to be a subsequence of the verse before it is used, so every word shown is
+  # still YouVersion's word in YouVersion's order. /verse always replays the
+  # whole verse. Set to 0 to always show passages in full.
+  abridge_over_chars: 160

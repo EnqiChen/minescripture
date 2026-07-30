@@ -16,6 +16,8 @@ import dev.minescripture.event.WorldListener;
 import dev.minescripture.journal.SessionJournal;
 import dev.minescripture.present.MomentPresenter;
 import dev.minescripture.present.Presenter;
+import dev.minescripture.scripture.Abridger;
+import dev.minescripture.scripture.Passage;
 import dev.minescripture.scripture.PassageCache;
 import dev.minescripture.scripture.ScriptureClient;
 import dev.minescripture.select.GlooClient;
@@ -59,7 +61,7 @@ public final class MineScripturePlugin extends JavaPlugin {
     private PlayerStateManager playerState;
 
     /** Bump whenever a shipped default VALUE changes; see config.yml. */
-    private static final int CONFIG_VERSION = 2;
+    private static final int CONFIG_VERSION = 3;
 
     @Override
     public void onEnable() {
@@ -84,10 +86,11 @@ public final class MineScripturePlugin extends JavaPlugin {
         }
 
         TriggerService.InterpretationSource interpreter = null;
+        GlooClient gloo = null;
         if (config.hasGloo()) {
             GlooTokenManager tokens = new GlooTokenManager(http, GlooTokenManager.DEFAULT_BASE,
                     config.glooClientId, config.glooClientSecret);
-            GlooClient gloo = new GlooClient(http, GlooClient.DEFAULT_BASE, tokens, config,
+            gloo = new GlooClient(http, GlooClient.DEFAULT_BASE, tokens, config,
                     msg -> getLogger().info(msg));
             interpreter = new MomentInterpreter(gloo, config, msg -> getLogger().info(msg));
         } else {
@@ -131,7 +134,7 @@ public final class MineScripturePlugin extends JavaPlugin {
                         passageCache, scripture));
 
         if (scripture != null) {
-            warmCache(config, pool, passageCache, scripture);
+            warmCache(config, pool, passageCache, scripture, gloo);
         }
         getLogger().info("MineScripture enabled — AI understands the moment. "
                 + "Scripture provides the meaning.");
@@ -147,7 +150,7 @@ public final class MineScripturePlugin extends JavaPlugin {
 
     /** Startup warmer: fallback refs onto disk so outages can never break a moment. */
     private void warmCache(MineScriptureConfig config, FallbackPool pool,
-                           PassageCache cache, ScriptureClient scripture) {
+                           PassageCache cache, ScriptureClient scripture, GlooClient gloo) {
         List<String> refs = List.copyOf(pool.verses().keySet());
         AtomicInteger ok = new AtomicInteger();
         CompletableFuture<?>[] futures = refs.stream()
@@ -155,9 +158,41 @@ public final class MineScripturePlugin extends JavaPlugin {
                         .thenRun(ok::incrementAndGet)
                         .exceptionally(err -> null))
                 .toArray(CompletableFuture[]::new);
-        CompletableFuture.allOf(futures).whenComplete((v, err) ->
-                getLogger().info("Fallback pool warm: " + ok.get() + "/" + refs.size()
-                        + " passages cached."));
+        CompletableFuture.allOf(futures).whenComplete((v, err) -> {
+            getLogger().info("Fallback pool warm: " + ok.get() + "/" + refs.size()
+                    + " passages cached.");
+            preAbridge(config, cache, gloo);
+        });
+    }
+
+    /**
+     * Shortens the long passages ahead of time. Deliberately at startup rather
+     * than at showtime: an abridgement needs its own Gloo call, and the gap
+     * between a moment and its verse has no room for a second one.
+     */
+    private void preAbridge(MineScriptureConfig config, PassageCache cache, GlooClient gloo) {
+        if (gloo == null || config.abridgeOverChars <= 0) {
+            return;
+        }
+        Abridger abridger = new Abridger(
+                prompt -> gloo.complete("You shorten Bible verses by deleting words only.", prompt),
+                config.abridgeOverChars);
+        List<Passage> tooLong = cache.longerThan(config.bibleId, config.abridgeOverChars);
+        if (tooLong.isEmpty()) {
+            return;
+        }
+        AtomicInteger done = new AtomicInteger();
+        CompletableFuture<?>[] jobs = tooLong.stream()
+                .map(p -> abridger.abridge(p).thenAccept(result -> {
+                    if (result.isAbridged()) {
+                        cache.put(config.bibleId, result);
+                        done.incrementAndGet();
+                    }
+                }).exceptionally(err -> null))
+                .toArray(CompletableFuture[]::new);
+        CompletableFuture.allOf(jobs).whenComplete((v, err) ->
+                getLogger().info("Shortened " + done.get() + "/" + tooLong.size()
+                        + " long passages for readability (whole verse still on /verse)."));
     }
 
     /**

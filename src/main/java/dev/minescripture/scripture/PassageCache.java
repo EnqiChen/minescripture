@@ -75,6 +75,16 @@ public final class PassageCache {
         return memory.size();
     }
 
+    /** Cached passages over a length, that do not already have a shorter form. */
+    public java.util.List<Passage> longerThan(int bibleId, int chars) {
+        String prefix = bibleId + ":";
+        return memory.entrySet().stream()
+                .filter(e -> e.getKey().startsWith(prefix))
+                .map(Map.Entry::getValue)
+                .filter(p -> p.text().length() > chars && !p.isAbridged())
+                .toList();
+    }
+
     private synchronized void persist() {
         try {
             Files.createDirectories(file.getParent());

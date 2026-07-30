@@ -40,6 +40,7 @@ public final class MineScriptureConfig {
     public final double deathEscalationFactor;
     public final int deathMaxCooldownSeconds;
     public final int deathClusterResetSeconds;
+    public final int abridgeOverChars;
     public final boolean chime;
 
     private MineScriptureConfig(Builder b) {
@@ -62,6 +63,7 @@ public final class MineScriptureConfig {
         this.deathEscalationFactor = b.deathEscalationFactor;
         this.deathMaxCooldownSeconds = b.deathMaxCooldownSeconds;
         this.deathClusterResetSeconds = b.deathClusterResetSeconds;
+        this.abridgeOverChars = b.abridgeOverChars;
         this.chime = b.chime;
     }
 
@@ -94,6 +96,7 @@ public final class MineScriptureConfig {
         b.deathEscalationFactor = v.dbl("deaths.escalation_factor", 1.75);
         b.deathMaxCooldownSeconds = v.integer("deaths.max_cooldown_s", 300);
         b.deathClusterResetSeconds = v.integer("deaths.run_reset_s", 600);
+        b.abridgeOverChars = v.integer("presentation.abridge_over_chars", 160);
         b.chime = v.bool("presentation.chime", true);
         return new MineScriptureConfig(b);
     }
@@ -131,6 +134,7 @@ public final class MineScriptureConfig {
         private double deathEscalationFactor = 1.75;
         private int deathMaxCooldownSeconds = 300;
         private int deathClusterResetSeconds = 600;
+        private int abridgeOverChars = 160;
         private boolean chime = true;
 
         public Builder yvpKey(String v) { this.yvpKey = v; return this; }
@@ -152,6 +156,7 @@ public final class MineScriptureConfig {
         public Builder deathEscalationFactor(double v) { this.deathEscalationFactor = v; return this; }
         public Builder deathMaxCooldownSeconds(int v) { this.deathMaxCooldownSeconds = v; return this; }
         public Builder deathClusterResetSeconds(int v) { this.deathClusterResetSeconds = v; return this; }
+        public Builder abridgeOverChars(int v) { this.abridgeOverChars = v; return this; }
         public Builder chime(boolean v) { this.chime = v; return this; }
 
         public MineScriptureConfig build() {
