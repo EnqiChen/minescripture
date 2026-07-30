@@ -208,10 +208,17 @@ keeps a recommendation system from collapsing into a whitelist.
 
 ### Humor with the same integrity
 
-When Gloo classifies a moment as lighthearted, MineScripture answers in kind —
-either with a curated, human-written line or, when enabled, with a short
-AI-generated quip. The quip travels inside the same interpretation response, so
-it costs no extra call and no extra latency.
+When Gloo classifies a moment as lighthearted, **it writes the line itself**. A
+curated human-written pool exists behind that, but as a safety net rather than
+the default — asking a model to recognise that a moment is funny and then having
+a human supply the joke would waste the judgement we went to the trouble of
+getting. The quip travels inside the same interpretation response, so it costs no
+extra call and no extra latency.
+
+Which source produced a given line is recorded rather than inferred. An earlier
+version of the admin panel reported "AI-generated" whenever the feature was
+switched on, which would have been a lie in exactly the case that matters — a
+quip the guard had rejected and quietly replaced.
 
 The boundary is absolute and enforced in code. A validator rejects any generated
 line that runs long, contains quotation marks, contains a chapter-and-verse

@@ -149,13 +149,16 @@ been seen. No usernames, no chat messages, no coordinates.
 Every word of **Scripture** a player reads is **verbatim text from YouVersion**.
 The AI selects Scripture; it never writes it.
 
-All other player-facing text is human-written, with one clearly bounded
-exception: on moments the AI classifies as lighthearted, and only when
-`levity_ai` is enabled, a short AI-generated quip may appear. It is visually
-distinct — no verse frame, no reference line — and a validator rejects any
-generated text containing a chapter:verse pattern or a book name followed by a
-number, so generated humor can never be mistaken for Scripture. Any rejection
-falls through to a curated, human-written pool.
+On moments the AI judges lighthearted, **Gloo writes the joke itself** — that is
+the point of asking a model to read the tone rather than matching a rule. A
+validator rejects any generated line containing a chapter:verse pattern or a book
+name followed by a number, so a quip can never be mistaken for Scripture, and a
+curated human-written pool covers anything rejected or unavailable. Which of the
+two produced a given line is recorded, and `/msc explain` reports it truthfully
+rather than assuming.
+
+The short narrative frames around a verse — *"You awaken in the dark."* — are
+static human-reviewed text.
 
 Serious moment → always Scripture. Comedic moment → humor, never Scripture-shaped.
 

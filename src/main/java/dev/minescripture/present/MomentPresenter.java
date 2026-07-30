@@ -49,11 +49,17 @@ import java.util.logging.Logger;
  */
 public final class MomentPresenter implements TriggerService.MomentSink {
 
+    /** Where a quip actually came from — not what the config hoped for. */
+    public enum QuipSource { GLOO, CURATED }
+
     public record ShownMoment(TriggerContext ctx, Interpretation interp, TriggerService.Origin origin,
-                              Passage passage, String quip, String frame, long at) {
+                              Passage passage, String quip, QuipSource quipSource, String frame, long at) {
         public boolean isLevity() {
             return quip != null;
         }
+    }
+
+    private record ChosenQuip(String text, QuipSource source) {
     }
 
     private final Plugin plugin;
@@ -117,12 +123,13 @@ public final class MomentPresenter implements TriggerService.MomentSink {
         // reports it. Only mishap-shaped events are eligible at all.
         if (interp.isLight() && config.levity && levityEligible(ctx.eventKey())
                 && (ctx.isDemo() || policy.levityAllowed(ctx.playerId(), ctx.at()))) {
-            String quip = chooseQuip(ctx, interp);
-            if (quip != null) {
+            ChosenQuip chosen = chooseQuip(ctx, interp);
+            if (chosen != null) {
                 policy.markLevity(ctx.playerId(), ctx.at());
-                ShownMoment moment = new ShownMoment(ctx, interp, origin, null, quip, null, ctx.at());
+                ShownMoment moment = new ShownMoment(ctx, interp, origin, null,
+                        chosen.text(), chosen.source(), null, ctx.at());
                 lastShown.put(ctx.playerId(), moment);
-                deliverTimed(ctx, player, player.isDead(), p -> presenter.showLevity(p, quip));
+                deliverTimed(ctx, player, player.isDead(), p -> presenter.showLevity(p, chosen.text()));
                 return;
             }
         }
@@ -225,7 +232,7 @@ public final class MomentPresenter implements TriggerService.MomentSink {
         deliverTimed(ctx, Bukkit.getPlayer(ctx.playerId()), deadAtMoment, anchor -> {
             String frame = frameFor(ctx.eventKey(), anchor.getWorld().getTime(),
                     anchor.getLocation().getBlock().getLightFromSky() > 0);
-            ShownMoment moment = new ShownMoment(ctx, interp, origin, passage, null, frame, ctx.at());
+            ShownMoment moment = new ShownMoment(ctx, interp, origin, passage, null, null, frame, ctx.at());
             for (Player recipient : recipients(ctx)) {
                 show(recipient, ctx, moment, deathDepth);
                 markSeen(recipient.getUniqueId(), moment);
@@ -303,10 +310,24 @@ public final class MomentPresenter implements TriggerService.MomentSink {
         return spec != null && spec.levityEligible();
     }
 
-    /** AI quip if allowed and it survives LevityGuard; else curated pool. */
-    private String chooseQuip(TriggerContext ctx, Interpretation interp) {
-        if (config.levityAi && LevityGuard.valid(interp.quip())) {
-            return interp.quip().trim();
+    /**
+     * Gloo's own quip is the primary path — writing the joke is the point of
+     * asking a model to judge the moment. The curated pool is the safety net for
+     * when the quip is missing or fails the guard, and which one was used is
+     * recorded rather than inferred: /msc explain must not claim the AI wrote
+     * something a human did.
+     */
+    private ChosenQuip chooseQuip(TriggerContext ctx, Interpretation interp) {
+        if (config.levityAi) {
+            if (LevityGuard.valid(interp.quip())) {
+                String text = interp.quip().trim();
+                log.info("[" + ctx.eventKey() + "] levity from Gloo: " + text);
+                return new ChosenQuip(text, QuipSource.GLOO);
+            }
+            if (interp.quip() != null) {
+                log.info("[" + ctx.eventKey() + "] Gloo's quip was rejected by LevityGuard, "
+                        + "using the curated pool: " + interp.quip());
+            }
         }
         Set<String> recent = recentQuips.computeIfAbsent(ctx.playerId(), k -> new LinkedHashSet<>());
         HumorPool.Quip quip = humor.pick(ctx.cause(), recent, random);
@@ -314,7 +335,8 @@ public final class MomentPresenter implements TriggerService.MomentSink {
             return null;
         }
         recent.add(quip.id());
-        return quip.text();
+        log.info("[" + ctx.eventKey() + "] levity from the curated pool: " + quip.id());
+        return new ChosenQuip(quip.text(), QuipSource.CURATED);
     }
 
     // ------------------------------------------------------------ helpers

@@ -140,8 +140,11 @@ public final class AdminCommand implements TabExecutor {
         sender.sendMessage(line("Moment: ", last.ctx().eventKey() + cause + ", " + minutes + " min into session."));
         if (last.isLevity()) {
             sender.sendMessage(line("Tone judged by Gloo AI Studio: ", "light — humor served instead of Scripture."));
-            sender.sendMessage(line("Text: ", (config.levityAi ? "AI-generated quip (LevityGuard-approved)"
-                    : "curated, human-written") + " — never presented as Scripture."));
+            boolean fromGloo = last.quipSource() == MomentPresenter.QuipSource.GLOO;
+            sender.sendMessage(line("Text: ", (fromGloo
+                    ? "written by Gloo AI Studio, passed LevityGuard"
+                    : "curated, human-written (Gloo's quip was unavailable or rejected)")
+                    + " — never presented as Scripture."));
             return;
         }
         sender.sendMessage(line("Interpreted & recommended by Gloo AI Studio: ",
