@@ -83,6 +83,16 @@ public final class MomentPresenter implements TriggerService.MomentSink {
     private final Map<UUID, Runnable> pendingRespawn = new ConcurrentHashMap<>();
     private final Map<UUID, ShownMoment> lastShown = new ConcurrentHashMap<>();
     private final Map<UUID, Set<String>> recentQuips = new ConcurrentHashMap<>();
+    /** When each player last had something put in front of them, by wall clock. */
+    private final Map<UUID, Long> lastShownAt = new ConcurrentHashMap<>();
+
+    /**
+     * Two verses inside this window read as a malfunction whatever the gate
+     * thought. The gate paces SUBMITS, but a moment can spend nine seconds being
+     * interpreted, so submits that were properly spaced can still land together.
+     * This is the last line, measured in screen time rather than intent.
+     */
+    private static final long SCREEN_GUARD_MS = 5_000L;
 
     public MomentPresenter(Plugin plugin, MineScriptureConfig config, FallbackPool pool, HumorPool humor,
                            TriggerPolicy policy, RefValidator validator, SessionVerseMemory verseMemory,
@@ -124,8 +134,11 @@ public final class MomentPresenter implements TriggerService.MomentSink {
         if (interp.isLight() && config.levity && levityEligible(ctx.eventKey())
                 && (ctx.isDemo() || policy.levityAllowed(ctx.playerId(), ctx.at()))) {
             ChosenQuip chosen = chooseQuip(ctx, interp);
-            if (chosen != null) {
+            if (chosen != null && !tooSoonFor(ctx.playerId(), ctx.eventKey())) {
                 policy.markLevity(ctx.playerId(), ctx.at());
+                lastShownAt.put(ctx.playerId(), System.currentTimeMillis());
+                log.info("[" + ctx.eventKey() + "] shown to [" + player.getName() + "]: levity ["
+                        + chosen.source() + "]");
                 ShownMoment moment = new ShownMoment(ctx, interp, origin, null,
                         chosen.text(), chosen.source(), null, ctx.at());
                 lastShown.put(ctx.playerId(), moment);
@@ -137,6 +150,10 @@ public final class MomentPresenter implements TriggerService.MomentSink {
         // on the main thread, while it is still true. Resolving a verse takes
         // seconds, by which time they may well have respawned already.
         boolean deadAtMoment = player.isDead();
+        // A near-death moment takes seconds to resolve, and the player may be dead
+        // by the time it arrives. Remember where the story was so we can tell.
+        StoryMemory story = stories.apply(ctx.playerId());
+        int deathsAtSubmit = story == null ? 0 : story.deaths();
 
         selectVerse(ctx, interp)
                 // One deadline over the whole tail, not just the Gloo leg: ref
@@ -151,7 +168,7 @@ public final class MomentPresenter implements TriggerService.MomentSink {
                         log.warning("[" + ctx.eventKey() + "] no passage available (no key/cache?) — moment skipped");
                         return;
                     }
-                    deliverVerse(ctx, interp, origin, passage.get(), deathDepth, deadAtMoment);
+                    deliverVerse(ctx, interp, origin, passage.get(), deathDepth, deadAtMoment, deathsAtSubmit);
                 }));
     }
 
@@ -228,15 +245,31 @@ public final class MomentPresenter implements TriggerService.MomentSink {
      * must describe the world they wake into, not the one they died in.
      */
     private void deliverVerse(TriggerContext ctx, Interpretation interp, TriggerService.Origin origin,
-                              Passage passage, int deathDepth, boolean deadAtMoment) {
+                              Passage passage, int deathDepth, boolean deadAtMoment, int deathsAtSubmit) {
         deliverTimed(ctx, Bukkit.getPlayer(ctx.playerId()), deadAtMoment, anchor -> {
             String frame = frameFor(ctx.eventKey(), anchor.getWorld().getTime(),
                     anchor.getLocation().getBlock().getLightFromSky() > 0);
             ShownMoment moment = new ShownMoment(ctx, interp, origin, passage, null, null, frame, ctx.at());
-            List<Player> to = recipients(ctx);
-            // Log every presentation. Without this a duplicate moment is invisible
-            // after the fact, which is exactly how a double sleep verse hid.
-            log.info("[" + ctx.eventKey() + "] shown to " + to.size() + ": "
+            boolean isDeath = "player_death".equals(ctx.eventKey());
+            // A death supersedes anything still in flight for the same incident:
+            // "you survived" delivered over a corpse is worse than saying nothing.
+            StoryMemory now = stories.apply(ctx.playerId());
+            if (!isDeath && now != null && now.deaths() > deathsAtSubmit) {
+                log.info("[" + ctx.eventKey() + "] dropped — the player died while it was"
+                        + " being written; the death has its own moment");
+                return;
+            }
+            List<Player> to = new ArrayList<>(recipients(ctx));
+            if (!isDeath) {
+                to.removeIf(p -> tooSoonFor(p.getUniqueId(), ctx.eventKey()));
+            }
+            if (to.isEmpty()) {
+                return;
+            }
+            long at = System.currentTimeMillis();
+            to.forEach(p -> lastShownAt.put(p.getUniqueId(), at));
+            log.info("[" + ctx.eventKey() + "] shown to "
+                    + to.stream().map(Player::getName).toList() + ": "
                     + passage.display() + " [" + origin + "]");
             for (Player recipient : to) {
                 show(recipient, ctx, moment, deathDepth);
@@ -309,6 +342,21 @@ public final class MomentPresenter implements TriggerService.MomentSink {
     }
 
     // ------------------------------------------------------------ levity
+
+    /**
+     * True if this player has just been shown something. Announces itself loudly:
+     * a near-miss here is a bug in the gate that nothing else would surface.
+     */
+    private boolean tooSoonFor(UUID playerId, String eventKey) {
+        Long previous = lastShownAt.get(playerId);
+        if (previous == null || System.currentTimeMillis() - previous >= SCREEN_GUARD_MS) {
+            return false;
+        }
+        log.warning("[" + eventKey + "] DOUBLE PREVENTED — that player was shown something "
+                + (System.currentTimeMillis() - previous) + "ms ago. The gate let two moments"
+                + " through for what is probably one incident.");
+        return true;
+    }
 
     private boolean levityEligible(String eventKey) {
         EventSpec spec = specs.get(eventKey);
