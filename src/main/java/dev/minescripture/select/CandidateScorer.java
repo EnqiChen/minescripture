@@ -92,8 +92,25 @@ public final class CandidateScorer {
             score += 2;
         }
         score += Math.max(0, 3 - rank); // Gloo's own ranking: +3 / +2 / +1
+        // Brevity is a presentation requirement, so it is scored rather than
+        // merely requested. A single verse beats a pair that fits equally well.
+        score += spanOf(ref) == 1 ? 4 : 0;
 
         return score;
+    }
+
+    /** Verses covered by a canonical ref: BOOK.C.V is 1, BOOK.C.V-W is W-V+1. */
+    static int spanOf(String ref) {
+        int dash = ref == null ? -1 : ref.indexOf('-');
+        if (dash < 0) {
+            return 1;
+        }
+        try {
+            int start = Integer.parseInt(ref.substring(ref.lastIndexOf('.', dash) + 1, dash));
+            return Integer.parseInt(ref.substring(dash + 1)) - start + 1;
+        } catch (RuntimeException e) {
+            return 1;
+        }
     }
 
     private static boolean containsIgnoreCase(Set<String> set, String value) {

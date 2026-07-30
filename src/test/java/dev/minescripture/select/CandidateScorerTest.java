@@ -35,8 +35,9 @@ class CandidateScorerTest {
 
         int genesis = CandidateScorer.score("GEN.1.25", 0, death(), "player_death", POOL, NONE, NONE, NONE);
         int psalm = CandidateScorer.score("PSA.34.18", 1, death(), "player_death", POOL, NONE, NONE, NONE);
-        assertTrue(genesis < 0 + psalm, "mismatch penalty + missing event fit must sink Genesis");
-        assertTrue(genesis <= 5, "no semantic connection → penalty applies");
+        assertTrue(psalm > genesis * 4, "a fitting verse should not merely edge ahead: " + psalm + " vs " + genesis);
+        // -5 mismatch, +5 unseen, +3 rank, +4 brevity
+        assertEquals(7, genesis, "no semantic connection → the penalty still bites");
     }
 
     // Novelty math: seen-today −10 AND losing the unseen +5 = a 15-point swing.
@@ -70,10 +71,23 @@ class CandidateScorerTest {
     void unknownRefsScoreNeutralNotNegative() {
         int unknown = CandidateScorer.score("OBA.1.1", 0, death(), "player_death",
                 POOL, NONE, NONE, NONE);
-        assertEquals(8, unknown, "unseen +5 and rank +3 only — neutral, no metadata penalty");
+        assertEquals(12, unknown,
+                "unseen +5, rank +3, single-verse +4 — neutral on meaning, no metadata penalty");
         String best = CandidateScorer.pickBest(List.of("OBA.1.1", "LAM.3.22-23"), death(),
                 "player_death", POOL, NONE, NONE, NONE).orElseThrow();
         assertEquals("LAM.3.22-23", best);
+    }
+
+    // A player reads this mid-game, so a one-verse passage is preferred over a
+    // two-verse one that fits equally well. Requested in the prompt AND scored,
+    // because asking the model nicely has never once been sufficient here.
+    @Test
+    void singleVersesArePreferredOverPairs() {
+        int single = CandidateScorer.score("PSA.23.4", 0, death(), "player_death", POOL, NONE, NONE, NONE);
+        int pair = CandidateScorer.score("LAM.3.22-23", 0, death(), "player_death", POOL, NONE, NONE, NONE);
+        assertEquals(1, CandidateScorer.spanOf("PSA.23.4"));
+        assertEquals(2, CandidateScorer.spanOf("LAM.3.22-23"));
+        assertTrue(single > pair, "one verse should win a close call: " + single + " vs " + pair);
     }
 
     @Test

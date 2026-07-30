@@ -45,7 +45,12 @@ public final class MomentInterpreter implements TriggerService.InterpretationSou
             - Each reference MUST use uppercase USFM book codes with period separators:
               BOOK.CHAPTER.VERSE or BOOK.CHAPTER.START-END (e.g. "LAM.3.22-23", "PSA.23.1-3", "JHN.3.16").
             - USFM codes: GEN, EXO, PSA, PRO, ECC, SNG, ISA, LAM, MAT, MRK, LUK, JHN, ROM, 1CO, 2CO, PHP, 1JN, REV, ...
-            - Maximum passage span: 1 to 3 verses per reference. Never a range longer than 3 verses.
+            - PREFER A SINGLE VERSE. The player has a few seconds to read this in the
+              middle of playing, so brevity is part of whether it lands at all.
+              Use two verses only when the second is genuinely needed to finish the
+              thought. Never more than two — longer ranges are rejected outright.
+            - Where two passages fit equally well, choose the shorter one. Scripture
+              has no shortage of brief, potent verses.
             - Output ONLY reference codes in recommended_refs — never Bible text.
             - All of Scripture is in range — prefer fitting-but-fresh passages over famous cliches,
               and avoid anything in seen_refs.

@@ -77,12 +77,14 @@ class RefNormalizerTest {
         assertEquals("JHN.3.16", n("JHN.3.16-16"));     // degenerate range collapses
     }
 
+    // A player reads this mid-game in a few seconds, so two verses is the ceiling.
     @Test
-    void spanCapAllowsThreeVersesRejectsMore() {
-        assertEquals("ROM.5.3-5", n("Romans 5:3-5"));   // exactly 3 verses — the cap
-        assertEquals("MAT.6.19-21", n("MAT.6.19-21"));
-        rejected("PSA.119.1-4");                        // 4 verses — over the cap
-        rejected("Psalm 23:1-6");                       // whole-psalm ranges never present
+    void spanCapAllowsTwoVersesRejectsMore() {
+        assertEquals("LAM.3.22-23", n("Lamentations 3:22-23")); // exactly 2 — the cap
+        assertEquals("JHN.3.16", n("John 3:16"));               // one is preferred
+        rejected("Romans 5:3-5");                               // 3 verses — over the cap
+        rejected("PSA.119.1-4");
+        rejected("Psalm 23:1-6");                               // whole-psalm ranges never present
     }
 
     @Test

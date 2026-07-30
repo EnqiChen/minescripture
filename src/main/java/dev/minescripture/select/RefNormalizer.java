@@ -28,11 +28,12 @@ public final class RefNormalizer {
     private static final int MAX_VERSE = 176; // Psalm 119
 
     /**
-     * Presentation policy, enforced here so every path (Gloo refs, validator,
-     * anything) inherits it: a moment's passage is 1-3 verses. Longer ranges
-     * are rejected and the next candidate / curated default takes over.
+     * Presentation policy, enforced here so every path inherits it: a moment's
+     * passage is one verse, or two when the second completes the thought. A
+     * player has seconds to read it, not a paragraph. Longer ranges are rejected
+     * and the next candidate or curated default takes over.
      */
-    static final int MAX_SPAN_VERSES = 3;
+    static final int MAX_SPAN_VERSES = 2;
 
     private RefNormalizer() {
     }
