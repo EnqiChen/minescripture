@@ -236,8 +236,8 @@ public final class MomentPresenter implements TriggerService.MomentSink {
 
     private void show(Player player, TriggerContext ctx, ShownMoment moment, int deathDepth) {
         switch (tierOf(ctx.eventKey(), deathDepth)) {
-            case "minor" -> presenter.showMinor(player, moment.passage());
-            case "major" -> presenter.showMajor(player, titleFor(ctx.eventKey()), moment.frame(), moment.passage());
+            case MINOR -> presenter.showMinor(player, moment.passage());
+            case MAJOR -> presenter.showMajor(player, titleFor(ctx.eventKey()), moment.frame(), moment.passage());
             default -> presenter.showStandard(player, moment.frame(), moment.passage());
         }
         journal.add(player.getUniqueId(), ctx.eventKey(), moment.passage());
@@ -275,6 +275,9 @@ public final class MomentPresenter implements TriggerService.MomentSink {
         }
         long delayTicks = switch (ctx.eventKey()) {
             case "found_diamonds" -> 15; // the deliberate beat
+            // Sleeping is the one moment a player has nothing to do and the screen
+            // has gone quiet. Let the fade settle, then put it in front of them.
+            case "sleep" -> 25;
             default -> 1;
         };
         sync(run, delayTicks);
@@ -369,15 +372,17 @@ public final class MomentPresenter implements TriggerService.MomentSink {
      * Repeated deaths in one bad run keep their verse but lose the ceremony:
      * the title is for the death that mattered, not the fourth in a row.
      */
-    private String tierOf(String eventKey, int deathDepth) {
+    /**
+     * Read from events.json rather than hardcoded here, so presentation can be
+     * tuned by editing data. The one exception is earned at runtime: repeated
+     * deaths in one bad run keep their verse but lose the ceremony.
+     */
+    private EventSpec.Tier tierOf(String eventKey, int deathDepth) {
         if ("player_death".equals(eventKey) && deathDepth > 0) {
-            return "standard";
+            return EventSpec.Tier.STANDARD;
         }
-        return switch (eventKey) {
-            case "eating_bread", "sleep" -> "minor";
-            case "player_death", "found_diamonds", "first_join" -> "major";
-            default -> "standard";
-        };
+        EventSpec spec = specs.get(eventKey);
+        return spec == null ? EventSpec.Tier.STANDARD : spec.tier();
     }
 
     public ShownMoment lastShown(UUID playerId) {

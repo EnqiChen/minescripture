@@ -120,6 +120,7 @@
     "sleep": {
       "refs": ["PSA.4.8", "PRO.3.24", "PSA.127.2"],
       "frame": "Rest now.",
+      "title": "Rest now",
       "interpretation": { "resonance": "rest", "emotional_arc": "day_to_rest", "emphasis": "peace", "tone": "calm" }
     },
     "thunderstorm": {
