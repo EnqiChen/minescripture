@@ -19,10 +19,10 @@ Not a Bible app bolted onto a game. The world's own moments become the invitatio
 ```
 You died after 47 minutes underground, having just found diamonds.
 
-  Because of the loving devotion of the Lord we are not consumed,
-  for His mercies never fail. They are new every morning;
-  great is Your faithfulness!
-  — Lamentations 3:22-23 (BSB)
+  Because of the Lord's great love we are not consumed, for his
+  compassions never fail. They are new every morning;
+  great is your faithfulness.
+  — Lamentations 3:22-23 (NIV)
 ```
 
 ## How it works
@@ -168,11 +168,24 @@ Serious moment → always Scripture. Comedic moment → humor, never Scripture-s
 Scripture text is retrieved at runtime from the **YouVersion Platform API**.
 Interpretation and recommendation are performed by **Gloo AI Studio**.
 
-Default translation: **Berean Standard Bible (BSB)**.
+Default translation: **New International Version (NIV)**, licensed through
+YouVersion's fast-track agreement with Biblica. Set `youversion.bible_id` to any
+version your app key is licensed for — a licensed version needs its publisher's
+agreement accepted once in the YouVersion developer dashboard, after which
+passages resolve immediately.
 
-> The Holy Bible, Berean Standard Bible, BSB is produced in cooperation with
-> Bible Hub, Discovery Bible, OpenBible.com and the Berean Bible Translation
-> Committee. This text of God's Word has been dedicated to the public domain.
+> THE HOLY BIBLE, NEW INTERNATIONAL VERSION®, NIV® Copyright © 1973, 1978,
+> 1984, 2011 by Biblica, Inc.® Used by permission. All rights reserved
+> worldwide.
+
+**One verse is deliberately read in another translation.** The first-join
+greeting calls the player a sojourner and quotes Psalm 119:19 to say why, which
+only works if the verse contains the word — NIV and BSB both render it
+"stranger". That verse alone is pinned to the American Standard Version via
+`bible_id` in `fallback.json`, and the on-screen attribution always names the
+translation actually shown. `/verse translation` lists the exception in game.
+
+> American Standard Version (1901). Public domain.
 
 ## Documentation
 

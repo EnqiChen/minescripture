@@ -4,7 +4,7 @@
 # shipped defaults. Bump it whenever a default VALUE changes (not just when keys
 # are added); on startup an older file is backed up and replaced, because a stale
 # value silently overriding a fix is almost impossible to notice from in-game.
-config_version: 4
+config_version: 5
 #
 # API keys: leave these empty and use environment variables instead (recommended):
 #   MSC_YVP_KEY      - YouVersion Platform app key
@@ -14,7 +14,11 @@ config_version: 4
 
 youversion:
   app_key: ""
-  bible_id: 3034          # Berean Standard Bible (public domain)
+  # Any version this app key is licensed for. Licensed versions need their
+  # publisher's fast-track agreement accepted once in the YouVersion developer
+  # dashboard; until then passages 403 while the version's metadata still 200s.
+  # A single verse can override this — see "bible_id" in fallback.json.
+  bible_id: 111           # New International Version (Biblica fast-track)
 
 gloo:
   client_id: ""
@@ -35,9 +39,11 @@ gloo:
 
 # Levity: on tone-light moments (comedic deaths), serve humor instead of a verse.
 # levity_ai additionally allows a short AI-generated quip (clearly separated from
-# Scripture, LevityGuard-validated). Shipped default off; demo config turns it on.
+# Scripture, LevityGuard-validated). On by default: the model writing the joke is
+# the point of asking it to judge the moment, and an install that never shows one
+# misrepresents what the plugin does. Set false for a curated-only deployment.
 levity: true
-levity_ai: false
+levity_ai: true
 
 budget:
   player_per_hour: 10

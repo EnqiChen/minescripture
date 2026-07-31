@@ -32,10 +32,10 @@ own visual language.
 ```
 You died after 47 minutes underground, having just found diamonds.
 
-  Because of the loving devotion of the Lord we are not consumed,
-  for His mercies never fail. They are new every morning;
-  great is Your faithfulness!
-  — Lamentations 3:22-23 (BSB)
+  Because of the Lord's great love we are not consumed, for his
+  compassions never fail. They are new every morning;
+  great is your faithfulness.
+  — Lamentations 3:22-23 (NIV)
 ```
 
 No menus. No second screen. Nothing to install on the player's machine. One jar
