@@ -61,7 +61,7 @@ public final class MineScripturePlugin extends JavaPlugin {
     private PlayerStateManager playerState;
 
     /** Bump whenever a shipped default VALUE changes; see config.yml. */
-    private static final int CONFIG_VERSION = 3;
+    private static final int CONFIG_VERSION = 4;
 
     @Override
     public void onEnable() {

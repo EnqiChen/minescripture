@@ -83,8 +83,8 @@ public final class MineScriptureConfig {
         b.glooClientSecret = firstNonBlank(v.str("gloo.client_secret", ""), envOr(env, "MSC_GLOO_SECRET"));
         b.tradition = v.str("gloo.tradition", "broad_christian");
         b.temperature = v.dbl("gloo.temperature", 0.4);
-        b.timeoutSuddenMs = v.integer("gloo.timeout_ms_sudden", 9000);
-        b.timeoutBackgroundMs = v.integer("gloo.timeout_ms_background", 12000);
+        b.timeoutSuddenMs = v.integer("gloo.timeout_ms_sudden", 15000);
+        b.timeoutBackgroundMs = v.integer("gloo.timeout_ms_background", 20000);
         b.levity = v.bool("levity", true);
         b.levityAi = v.bool("levity_ai", false);
         b.budgetPlayerPerHour = v.integer("budget.player_per_hour", 10);
@@ -121,8 +121,8 @@ public final class MineScriptureConfig {
         private String glooClientSecret = "";
         private String tradition = "broad_christian";
         private double temperature = 0.4;
-        private long timeoutSuddenMs = 9000;
-        private long timeoutBackgroundMs = 12000;
+        private long timeoutSuddenMs = 15000;
+        private long timeoutBackgroundMs = 20000;
         private boolean levity = true;
         private boolean levityAi = false;
         private int budgetPlayerPerHour = 10;
