@@ -285,7 +285,11 @@ public final class MomentPresenter implements TriggerService.MomentSink {
     private void show(Player player, TriggerContext ctx, ShownMoment moment, int deathDepth) {
         switch (tierOf(ctx.eventKey(), deathDepth)) {
             case MINOR -> presenter.showMinor(player, moment.passage());
-            case MAJOR -> presenter.showMajor(player, titleFor(ctx), moment.frame(), moment.passage());
+            case MAJOR -> {
+                FallbackPool.Variant shown = shownWording(ctx);
+                presenter.showMajor(player, shown.title(), shown.subtitle(),
+                        moment.frame(), moment.passage());
+            }
             default -> presenter.showStandard(player, moment.frame(), moment.passage());
         }
         journal.add(player.getUniqueId(), ctx.eventKey(), moment.passage());
@@ -434,14 +438,24 @@ public final class MomentPresenter implements TriggerService.MomentSink {
         }
     }
 
-    /** A few words for the big on-screen line; the sentence stays in chat. */
-    private String titleFor(TriggerContext ctx) {
+    /**
+     * A few words for the big on-screen line; the sentence stays in chat. The
+     * whole wording is resolved rather than just its first line, so a greeting
+     * split across two lines keeps both halves together.
+     */
+    private FallbackPool.Variant shownWording(TriggerContext ctx) {
         FallbackPool.EventDefault defaults = pool.defaultsFor(ctx.eventKey());
         if (defaults == null) {
-            return "";
+            return new FallbackPool.Variant("", "");
         }
         String remembered = lastWording.get(ctx.playerId() + ":" + ctx.eventKey());
-        return remembered != null ? remembered : defaults.titleOrShortFrame();
+        if (remembered == null) {
+            return defaults.baseWording();
+        }
+        return defaults.variants().stream()
+                .filter(v -> remembered.equals(v.title()))
+                .findFirst()
+                .orElseGet(() -> new FallbackPool.Variant(remembered, defaults.subtitle(), defaults.frame()));
     }
 
     /** Chosen once per moment and remembered, so title and frame agree. */

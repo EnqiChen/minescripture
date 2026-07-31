@@ -29,11 +29,24 @@ public final class FallbackPool {
      *                      dawn/day/dusk/night. A frame must never claim a time
      *                      of day that isn't true when the player reads it.
      */
-    /** One way of introducing a moment: the centred line and the chat line. */
-    public record Variant(String title, String frame) {
+    /**
+     * One way of introducing a moment: the centred line, an optional second line
+     * beneath it, and the chat line. A Minecraft title has exactly two text
+     * slots, so a wording that claims the lower slot gives up the gold verse
+     * reference there — it is still printed in the chat block underneath.
+     */
+    public record Variant(String title, String subtitle, String frame) {
+
+        public Variant(String title, String frame) {
+            this(title, null, frame);
+        }
+
+        public boolean hasSubtitle() {
+            return subtitle != null && !subtitle.isBlank();
+        }
     }
 
-    public record EventDefault(List<String> refs, String frame, String title,
+    public record EventDefault(List<String> refs, String frame, String title, String subtitle,
                                Map<String, String> framesByPhase, List<Variant> variants,
                                Interpretation interpretation) {
 
@@ -46,7 +59,7 @@ public final class FallbackPool {
          */
         public Variant variant(java.util.Random random, String avoid) {
             if (variants.isEmpty()) {
-                return new Variant(titleOrShortFrame(), frame);
+                return baseWording();
             }
             List<Variant> pool = variants.stream()
                     .filter(v -> !v.title().equals(avoid))
@@ -62,6 +75,11 @@ public final class FallbackPool {
          */
         public String titleOrShortFrame() {
             return title == null || title.isBlank() ? frame : title;
+        }
+
+        /** The event's own wording, used when no variants are configured. */
+        public Variant baseWording() {
+            return new Variant(titleOrShortFrame(), subtitle, frame);
         }
 
         /** The variant for this phase of the day, or the neutral frame. */
@@ -134,12 +152,14 @@ public final class FallbackPool {
                 for (JsonElement ve : JsonUtil.array(d, "variants")) {
                     JsonObject v = ve.getAsJsonObject();
                     variants.add(new Variant(JsonUtil.str(v, "title", null),
+                            JsonUtil.str(v, "subtitle", null),
                             JsonUtil.str(v, "frame", "")));
                 }
                 defaults.put(event, new EventDefault(
                         List.copyOf(refs),
                         JsonUtil.str(d, "frame", ""),
                         JsonUtil.str(d, "title", null),
+                        JsonUtil.str(d, "subtitle", null),
                         Map.copyOf(frames),
                         List.copyOf(variants),
                         new Interpretation(

@@ -56,10 +56,19 @@ public final class Presenter {
         chime(player);
     }
 
-    public void showMajor(Player player, String title, String frame, Passage passage) {
+    /**
+     * A title has one line above and one below. By default the lower line is the
+     * verse reference; a wording may claim it instead to break a greeting across
+     * two lines. The reference is never lost either way — the chat block prints
+     * it directly underneath.
+     */
+    public void showMajor(Player player, String title, String subtitle, String frame, Passage passage) {
+        Component lower = subtitle == null || subtitle.isBlank()
+                ? Component.text(attribution(passage), NamedTextColor.GOLD)
+                : Component.text(subtitle, NamedTextColor.WHITE);
         player.showTitle(Title.title(
                 Component.text(title, NamedTextColor.WHITE),
-                Component.text(attribution(passage), NamedTextColor.GOLD),
+                lower,
                 TITLE_TIMES));
         chatBlock(player, frame, passage);
         chime(player);

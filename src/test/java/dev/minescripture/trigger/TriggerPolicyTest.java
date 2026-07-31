@@ -206,10 +206,10 @@ class TriggerPolicyTest {
         assertTrue(policy.evaluate(ctx("eating_bread", 0), false, false).useAi());
         assertTrue(policy.evaluate(ctx("taming", 1_000L), false, false).useAi());
         // Budget exhausted: non-priority event presents from cache/fallback...
-        TriggerPolicy.Decision sleep = policy.evaluate(ctx("sleep", 2_000L), false, false);
-        assertTrue(sleep.present());
-        assertFalse(sleep.useAi());
-        assertEquals("budget", sleep.reason());
+        TriggerPolicy.Decision quiet = policy.evaluate(ctx("survived_the_night", 2_000L), false, false);
+        assertTrue(quiet.present());
+        assertFalse(quiet.useAi());
+        assertEquals("budget", quiet.reason());
         // ...but a death (priority) still deserves fresh AI.
         TriggerPolicy.Decision death = policy.evaluate(ctx("player_death", 3_000L), false, false);
         assertTrue(death.useAi());

@@ -68,16 +68,18 @@
     "first_join": {
       "refs": ["JER.29.11", "JOS.1.9", "PSA.121.7-8"],
       "frame": "Welcome, sojourner.",
-      "title": "Welcome, sojourner.",
+      "title": "Welcome,",
+      "subtitle": "sojourner",
       "interpretation": { "resonance": "beginnings", "emotional_arc": "arrival", "emphasis": "hope", "tone": "warm" }
     },
     "rejoin": {
       "refs": ["PSA.121.8", "ISA.43.1", "PSA.139.5"],
       "frame": "Welcome back, sojourner.",
-      "title": "Welcome back, sojourner.",
+      "title": "Welcome back,",
+      "subtitle": "sojourner",
       "_variants_comment": "Rotated, never the same one twice running. A line a player sees every session goes stale in a way a verse does not, because the verse rotates and the frame did not.",
       "variants": [
-        { "frame": "Welcome back, sojourner.",        "title": "Welcome back, sojourner." },
+        { "frame": "Welcome back, sojourner.",        "title": "Welcome back,", "subtitle": "sojourner" },
         { "frame": "The sojourner returns.",          "title": "The sojourner returns." },
         { "frame": "You take up the road again.",     "title": "You take up the road." },
         { "frame": "Your pilgrimage continues.",      "title": "Your pilgrimage continues." },

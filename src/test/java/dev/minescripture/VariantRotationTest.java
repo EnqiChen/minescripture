@@ -61,7 +61,29 @@ class VariantRotationTest {
         for (FallbackPool.Variant v : pool().defaultsFor("rejoin").variants()) {
             assertTrue(v.title().length() <= 28, "too long for a title: " + v.title());
             assertFalse(v.frame().isBlank());
+            if (v.hasSubtitle()) {
+                assertTrue(v.subtitle().length() <= 28, "second line too long: " + v.subtitle());
+            }
         }
+    }
+
+    /**
+     * A Minecraft title has two text slots. A greeting may claim the lower one to
+     * break across two lines; everything else leaves it to the verse reference.
+     */
+    @Test
+    void aGreetingSplitAcrossTwoLinesKeepsBothHalves() {
+        FallbackPool pool = pool();
+
+        FallbackPool.Variant join = pool.defaultsFor("first_join").baseWording();
+        assertTrue(join.hasSubtitle());
+        assertEquals("Welcome,", join.title());
+        assertEquals("sojourner", join.subtitle());
+        assertEquals("Welcome, sojourner.", join.frame(), "chat still reads as one sentence");
+
+        FallbackPool.Variant death = pool.defaultsFor("player_death").variant(new Random(3), null);
+        assertFalse(death.hasSubtitle(),
+                "a wording with no second line leaves the slot to the gold reference");
     }
 
     @Test

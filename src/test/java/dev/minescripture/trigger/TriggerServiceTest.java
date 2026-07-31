@@ -168,6 +168,28 @@ class TriggerServiceTest {
                 "one call for the cold moment, one to restock behind the cached serve");
     }
 
+    /**
+     * Night falls and the player goes straight to bed — the most ordinary
+     * sequence in Minecraft, and the two moments are inherently seconds apart.
+     * With sleep outside the priority set the 90-second floor swallowed it every
+     * time, silently, on the one night of a player's game where it is new.
+     */
+    @Test
+    void goingToBedRightAfterNightfallStillSpeaks(@TempDir Path tmp) throws Exception {
+        RecordingSink sink = new RecordingSink(2);
+        TriggerService svc = service(MineScriptureConfig.builder().build(), tmp,
+                (ctx, story) -> CompletableFuture.completedFuture(gloo("rest")), sink);
+
+        svc.onJoin(P1, 0);
+        svc.submit(TriggerContext.of(P1, "first_nightfall", 1_000L));
+        svc.submit(TriggerContext.of(P1, "sleep", 21_000L));
+        assertTrue(sink.latch.await(2, TimeUnit.SECONDS), "the sleep moment must not be swallowed");
+
+        assertEquals(2, sink.presented.size());
+        assertEquals("sleep", sink.presented.get(1).ctx().eventKey());
+        assertEquals(0, svc.suppressedSnapshot().getOrDefault("global_cooldown", 0));
+    }
+
     @Test
     void reconnectWithinGraceKeepsStory(@TempDir Path tmp) {
         TriggerService svc = service(MineScriptureConfig.builder().build(), tmp,

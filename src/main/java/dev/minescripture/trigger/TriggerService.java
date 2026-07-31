@@ -154,6 +154,12 @@ public final class TriggerService {
                 story.recordCollapsed(ctx.eventKey());
             }
             count(suppressedByReason, decision.reason());
+            // A moment that stays silent has always had a reason, and until now
+            // only a counter knew it. "Where did that verse go?" then costs an
+            // archaeology session across rotated logs, which is exactly the
+            // failure this project keeps having: the code knows and no one is
+            // told. One line, so the log answers the question by itself.
+            diagnostics.accept("[" + ctx.eventKey() + "] silent: " + decision.reason());
             return decision;
         }
 
