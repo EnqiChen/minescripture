@@ -85,6 +85,8 @@ public final class MomentPresenter implements TriggerService.MomentSink {
     private final Map<UUID, Set<String>> recentQuips = new ConcurrentHashMap<>();
     /** When each player last had something put in front of them, by wall clock. */
     private final Map<UUID, Long> lastShownAt = new ConcurrentHashMap<>();
+    /** Last wording used per player+event, so a recurring moment varies its greeting. */
+    private final Map<String, String> lastWording = new ConcurrentHashMap<>();
 
     /**
      * Two verses inside this window read as a malfunction whatever the gate
@@ -247,8 +249,9 @@ public final class MomentPresenter implements TriggerService.MomentSink {
     private void deliverVerse(TriggerContext ctx, Interpretation interp, TriggerService.Origin origin,
                               Passage passage, int deathDepth, boolean deadAtMoment, int deathsAtSubmit) {
         deliverTimed(ctx, Bukkit.getPlayer(ctx.playerId()), deadAtMoment, anchor -> {
+            FallbackPool.Variant wording = wordingFor(ctx);
             String frame = frameFor(ctx.eventKey(), anchor.getWorld().getTime(),
-                    anchor.getLocation().getBlock().getLightFromSky() > 0);
+                    anchor.getLocation().getBlock().getLightFromSky() > 0, wording);
             ShownMoment moment = new ShownMoment(ctx, interp, origin, passage, null, null, frame, ctx.at());
             boolean isDeath = "player_death".equals(ctx.eventKey());
             // A death supersedes anything still in flight for the same incident:
@@ -282,7 +285,7 @@ public final class MomentPresenter implements TriggerService.MomentSink {
     private void show(Player player, TriggerContext ctx, ShownMoment moment, int deathDepth) {
         switch (tierOf(ctx.eventKey(), deathDepth)) {
             case MINOR -> presenter.showMinor(player, moment.passage());
-            case MAJOR -> presenter.showMajor(player, titleFor(ctx.eventKey()), moment.frame(), moment.passage());
+            case MAJOR -> presenter.showMajor(player, titleFor(ctx), moment.frame(), moment.passage());
             default -> presenter.showStandard(player, moment.frame(), moment.passage());
         }
         journal.add(player.getUniqueId(), ctx.eventKey(), moment.passage());
@@ -432,15 +435,40 @@ public final class MomentPresenter implements TriggerService.MomentSink {
     }
 
     /** A few words for the big on-screen line; the sentence stays in chat. */
-    private String titleFor(String eventKey) {
-        FallbackPool.EventDefault defaults = pool.defaultsFor(eventKey);
-        return defaults == null ? "" : defaults.titleOrShortFrame();
+    private String titleFor(TriggerContext ctx) {
+        FallbackPool.EventDefault defaults = pool.defaultsFor(ctx.eventKey());
+        if (defaults == null) {
+            return "";
+        }
+        String remembered = lastWording.get(ctx.playerId() + ":" + ctx.eventKey());
+        return remembered != null ? remembered : defaults.titleOrShortFrame();
     }
 
-    private String frameFor(String eventKey, long worldTime, boolean canSeeSky) {
+    /** Chosen once per moment and remembered, so title and frame agree. */
+    private FallbackPool.Variant wordingFor(TriggerContext ctx) {
+        FallbackPool.EventDefault defaults = pool.defaultsFor(ctx.eventKey());
+        if (defaults == null) {
+            return new FallbackPool.Variant("", "");
+        }
+        String key = ctx.playerId() + ":" + ctx.eventKey();
+        FallbackPool.Variant chosen = defaults.variant(random, lastWording.get(key));
+        lastWording.put(key, chosen.title());
+        return chosen;
+    }
+
+    /**
+     * Time-of-day wording still wins where it exists — saying "at dawn" when it is
+     * not dawn is worse than saying the same thing twice.
+     */
+    private String frameFor(String eventKey, long worldTime, boolean canSeeSky,
+                            FallbackPool.Variant wording) {
         FallbackPool.EventDefault defaults = pool.defaultsFor(eventKey);
-        return defaults == null ? ""
-                : defaults.frameFor(FallbackPool.phaseOf(worldTime, canSeeSky));
+        if (defaults == null) {
+            return "";
+        }
+        String phase = FallbackPool.phaseOf(worldTime, canSeeSky);
+        String byPhase = defaults.framesByPhase().get(phase);
+        return byPhase != null ? byPhase : wording.frame();
     }
 
     /**

@@ -29,8 +29,31 @@ public final class FallbackPool {
      *                      dawn/day/dusk/night. A frame must never claim a time
      *                      of day that isn't true when the player reads it.
      */
+    /** One way of introducing a moment: the centred line and the chat line. */
+    public record Variant(String title, String frame) {
+    }
+
     public record EventDefault(List<String> refs, String frame, String title,
-                               Map<String, String> framesByPhase, Interpretation interpretation) {
+                               Map<String, String> framesByPhase, List<Variant> variants,
+                               Interpretation interpretation) {
+
+        /**
+         * A moment that recurs needs more than one way of announcing itself. The
+         * verse already rotates; a fixed frame above it goes stale by the third
+         * session. Returns the base wording when no variants are configured.
+         *
+         * @param avoid the wording used last time, so it is not repeated back to back
+         */
+        public Variant variant(java.util.Random random, String avoid) {
+            if (variants.isEmpty()) {
+                return new Variant(titleOrShortFrame(), frame);
+            }
+            List<Variant> pool = variants.stream()
+                    .filter(v -> !v.title().equals(avoid))
+                    .toList();
+            List<Variant> from = pool.isEmpty() ? variants : pool;
+            return from.get(random.nextInt(from.size()));
+        }
 
         /**
          * Minecraft renders titles at roughly 4x scale, so anything approaching a
@@ -107,11 +130,18 @@ public final class FallbackPool {
                         frames.put(phase, framesJson.get(phase).getAsString());
                     }
                 }
+                List<Variant> variants = new java.util.ArrayList<>();
+                for (JsonElement ve : JsonUtil.array(d, "variants")) {
+                    JsonObject v = ve.getAsJsonObject();
+                    variants.add(new Variant(JsonUtil.str(v, "title", null),
+                            JsonUtil.str(v, "frame", "")));
+                }
                 defaults.put(event, new EventDefault(
                         List.copyOf(refs),
                         JsonUtil.str(d, "frame", ""),
                         JsonUtil.str(d, "title", null),
                         Map.copyOf(frames),
+                        List.copyOf(variants),
                         new Interpretation(
                                 JsonUtil.str(interp, "resonance", "presence"),
                                 JsonUtil.str(interp, "emotional_arc", "moment"),

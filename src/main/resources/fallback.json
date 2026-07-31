@@ -75,6 +75,14 @@
       "refs": ["PSA.121.8", "ISA.43.1", "PSA.139.5"],
       "frame": "Welcome back, sojourner.",
       "title": "Welcome back, sojourner.",
+      "_variants_comment": "Rotated, never the same one twice running. A line a player sees every session goes stale in a way a verse does not, because the verse rotates and the frame did not.",
+      "variants": [
+        { "frame": "Welcome back, sojourner.", "title": "Welcome back, sojourner." },
+        { "frame": "The road brought you back.", "title": "You return." },
+        { "frame": "You are here again.",        "title": "Here again." },
+        { "frame": "The world kept your place.", "title": "Still here." },
+        { "frame": "Back where you left off.",   "title": "Back again." }
+      ],
       "interpretation": { "resonance": "return", "emotional_arc": "away_to_back", "emphasis": "belonging", "tone": "warm" }
     },
     "first_nightfall": {
