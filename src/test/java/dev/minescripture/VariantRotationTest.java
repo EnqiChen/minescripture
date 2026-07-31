@@ -5,7 +5,9 @@ import org.junit.jupiter.api.Test;
 
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
@@ -58,32 +60,52 @@ class VariantRotationTest {
     @Test
     void everyGreetingFitsTheCentredLine() {
         // The line that overflowed a Minecraft title was 40 characters at ~4x scale.
+        // Accent markers are styling, so they are not part of what has to fit.
         for (FallbackPool.Variant v : pool().defaultsFor("rejoin").variants()) {
-            assertTrue(v.title().length() <= 28, "too long for a title: " + v.title());
+            String onScreen = FallbackPool.plain(v.title());
+            assertTrue(onScreen.length() <= 28, "too long for a title: " + onScreen);
             assertFalse(v.frame().isBlank());
-            if (v.hasSubtitle()) {
-                assertTrue(v.subtitle().length() <= 28, "second line too long: " + v.subtitle());
-            }
         }
     }
 
     /**
-     * A Minecraft title has two text slots. A greeting may claim the lower one to
-     * break across two lines; everything else leaves it to the verse reference.
+     * A title may gild one word — "Welcome, {Sojourner}" — and the braces are
+     * markup, not text. An unbalanced or greedy marker would put a stray brace on
+     * screen in the one frame a first-time player is guaranteed to see.
      */
     @Test
-    void aGreetingSplitAcrossTwoLinesKeepsBothHalves() {
+    void accentMarkersAreBalancedAndNeverReachThePlayerAsText() {
         FallbackPool pool = pool();
+        for (String event : List.of("first_join", "rejoin")) {
+            FallbackPool.EventDefault defaults = pool.defaultsFor(event);
+            List<String> titles = new ArrayList<>();
+            titles.add(defaults.titleOrShortFrame());
+            defaults.variants().forEach(v -> titles.add(v.title()));
 
-        FallbackPool.Variant join = pool.defaultsFor("first_join").baseWording();
-        assertTrue(join.hasSubtitle());
-        assertEquals("Welcome,", join.title());
-        assertEquals("sojourner", join.subtitle());
-        assertEquals("Welcome, sojourner.", join.frame(), "chat still reads as one sentence");
+            for (String title : titles) {
+                long opens = title.chars().filter(c -> c == '{').count();
+                long closes = title.chars().filter(c -> c == '}').count();
+                assertEquals(opens, closes, "unbalanced accent markers: " + title);
+                assertTrue(opens <= 1, "at most one accented span per title: " + title);
+                assertFalse(FallbackPool.plain(title).contains("{"), title);
+                assertFalse(FallbackPool.plain(title).contains("}"), title);
+            }
+            assertFalse(defaults.frame().contains("{"),
+                    "chat prose is never styled this way: " + defaults.frame());
+        }
+    }
 
-        FallbackPool.Variant death = pool.defaultsFor("player_death").variant(new Random(3), null);
-        assertFalse(death.hasSubtitle(),
-                "a wording with no second line leaves the slot to the gold reference");
+    @Test
+    void theWelcomeIsAddressedToSomeone() {
+        // "Sojourner" is capitalised because the line addresses the player directly,
+        // the same reason "Welcome, Traveler" is. It stays lowercase where it is an
+        // ordinary noun rather than a form of address.
+        FallbackPool pool = pool();
+        assertEquals("Welcome, {Sojourner}", pool.defaultsFor("first_join").titleOrShortFrame());
+        assertEquals("Welcome, Sojourner.", pool.defaultsFor("first_join").frame());
+        assertTrue(pool.defaultsFor("rejoin").variants().stream()
+                        .anyMatch(v -> v.title().contains("{sojourner}")),
+                "the third-person greeting keeps the common noun lowercase");
     }
 
     @Test

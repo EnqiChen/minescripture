@@ -73,8 +73,13 @@ public final class MomentInterpreter implements TriggerService.InterpretationSou
             - Gentle and kind — a smile at the mishap, never mockery of the player, and
               never mockery of Scripture.
 
-            Tone judgment matters: a comedic mishap (cactus hug, falling into your own farm pit) is "light";
-            genuine loss, first-time wonder, danger survived, and fellowship are never "light".
+            Tone judgment matters. A comedic mishap is "light" whether or not the player
+            survived it: hugging a cactus, falling into your own farm pit, losing a fight
+            to a chicken, walking off a ledge you dug yourself. Surviving one at half a
+            heart is funnier than dying to it, not more serious.
+            Real peril is different — a creeper at point-blank range, a cave-in, a mob
+            you barely escaped — and stays "encouraging".
+            Genuine loss, first-time wonder, and fellowship are never "light".
             """;
 
     private final GlooClient gloo;

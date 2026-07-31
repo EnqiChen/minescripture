@@ -40,8 +40,8 @@ class AssetsTest {
     }
 
     @Test
-    void fallbackPoolHasExactly49Verses() {
-        assertEquals(49, realPool().verses().size());
+    void fallbackPoolHasExactly51Verses() {
+        assertEquals(51, realPool().verses().size());
     }
 
     @Test

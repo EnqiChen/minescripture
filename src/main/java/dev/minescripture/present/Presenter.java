@@ -5,6 +5,7 @@ import dev.minescripture.scripture.Passage;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.title.Title;
@@ -56,22 +57,38 @@ public final class Presenter {
         chime(player);
     }
 
-    /**
-     * A title has one line above and one below. By default the lower line is the
-     * verse reference; a wording may claim it instead to break a greeting across
-     * two lines. The reference is never lost either way — the chat block prints
-     * it directly underneath.
-     */
-    public void showMajor(Player player, String title, String subtitle, String frame, Passage passage) {
-        Component lower = subtitle == null || subtitle.isBlank()
-                ? Component.text(attribution(passage), NamedTextColor.GOLD)
-                : Component.text(subtitle, NamedTextColor.WHITE);
+    public void showMajor(Player player, String title, String frame, Passage passage) {
         player.showTitle(Title.title(
-                Component.text(title, NamedTextColor.WHITE),
-                lower,
+                accented(title),
+                Component.text(attribution(passage), NamedTextColor.GOLD),
                 TITLE_TIMES));
         chatBlock(player, frame, passage);
         chime(player);
+    }
+
+    /**
+     * A wording may mark one span for the accent colour with braces —
+     * "Welcome, {Sojourner}" — so the word being addressed carries the same gold
+     * as the reference beneath it. Unmarked wordings stay entirely white, and an
+     * unclosed brace is treated as ordinary text rather than swallowing the line.
+     */
+    static Component accented(String title) {
+        TextComponent.Builder built = Component.text();
+        int cursor = 0;
+        while (cursor < title.length()) {
+            int open = title.indexOf('{', cursor);
+            int close = open < 0 ? -1 : title.indexOf('}', open + 1);
+            if (close < 0) {
+                built.append(Component.text(title.substring(cursor), NamedTextColor.WHITE));
+                break;
+            }
+            if (open > cursor) {
+                built.append(Component.text(title.substring(cursor, open), NamedTextColor.WHITE));
+            }
+            built.append(Component.text(title.substring(open + 1, close), NamedTextColor.GOLD));
+            cursor = close + 1;
+        }
+        return built.build();
     }
 
     /** Distinct light format: single italic line, no frame, no gold attribution. */

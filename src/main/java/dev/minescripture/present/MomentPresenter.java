@@ -285,11 +285,8 @@ public final class MomentPresenter implements TriggerService.MomentSink {
     private void show(Player player, TriggerContext ctx, ShownMoment moment, int deathDepth) {
         switch (tierOf(ctx.eventKey(), deathDepth)) {
             case MINOR -> presenter.showMinor(player, moment.passage());
-            case MAJOR -> {
-                FallbackPool.Variant shown = shownWording(ctx);
-                presenter.showMajor(player, shown.title(), shown.subtitle(),
-                        moment.frame(), moment.passage());
-            }
+            case MAJOR -> presenter.showMajor(player, shownWording(ctx).title(),
+                    moment.frame(), moment.passage());
             default -> presenter.showStandard(player, moment.frame(), moment.passage());
         }
         journal.add(player.getUniqueId(), ctx.eventKey(), moment.passage());
@@ -455,7 +452,7 @@ public final class MomentPresenter implements TriggerService.MomentSink {
         return defaults.variants().stream()
                 .filter(v -> remembered.equals(v.title()))
                 .findFirst()
-                .orElseGet(() -> new FallbackPool.Variant(remembered, defaults.subtitle(), defaults.frame()));
+                .orElseGet(() -> new FallbackPool.Variant(remembered, defaults.frame()));
     }
 
     /** Chosen once per moment and remembered, so title and frame agree. */

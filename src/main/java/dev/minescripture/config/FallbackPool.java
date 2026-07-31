@@ -30,23 +30,20 @@ public final class FallbackPool {
      *                      of day that isn't true when the player reads it.
      */
     /**
-     * One way of introducing a moment: the centred line, an optional second line
-     * beneath it, and the chat line. A Minecraft title has exactly two text
-     * slots, so a wording that claims the lower slot gives up the gold verse
-     * reference there — it is still printed in the chat block underneath.
+     * One way of introducing a moment: the centred line and the chat line. A
+     * title may mark a single span for the accent colour with braces —
+     * "Welcome, {Sojourner}" — which is styling, not content, and never reaches
+     * the screen as text.
      */
-    public record Variant(String title, String subtitle, String frame) {
-
-        public Variant(String title, String frame) {
-            this(title, null, frame);
-        }
-
-        public boolean hasSubtitle() {
-            return subtitle != null && !subtitle.isBlank();
-        }
+    public record Variant(String title, String frame) {
     }
 
-    public record EventDefault(List<String> refs, String frame, String title, String subtitle,
+    /** A wording as the player reads it, with any accent markers removed. */
+    public static String plain(String wording) {
+        return wording == null ? "" : wording.replace("{", "").replace("}", "");
+    }
+
+    public record EventDefault(List<String> refs, String frame, String title,
                                Map<String, String> framesByPhase, List<Variant> variants,
                                Interpretation interpretation) {
 
@@ -79,7 +76,7 @@ public final class FallbackPool {
 
         /** The event's own wording, used when no variants are configured. */
         public Variant baseWording() {
-            return new Variant(titleOrShortFrame(), subtitle, frame);
+            return new Variant(titleOrShortFrame(), frame);
         }
 
         /** The variant for this phase of the day, or the neutral frame. */
@@ -152,14 +149,12 @@ public final class FallbackPool {
                 for (JsonElement ve : JsonUtil.array(d, "variants")) {
                     JsonObject v = ve.getAsJsonObject();
                     variants.add(new Variant(JsonUtil.str(v, "title", null),
-                            JsonUtil.str(v, "subtitle", null),
                             JsonUtil.str(v, "frame", "")));
                 }
                 defaults.put(event, new EventDefault(
                         List.copyOf(refs),
                         JsonUtil.str(d, "frame", ""),
                         JsonUtil.str(d, "title", null),
-                        JsonUtil.str(d, "subtitle", null),
                         Map.copyOf(frames),
                         List.copyOf(variants),
                         new Interpretation(

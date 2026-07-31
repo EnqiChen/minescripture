@@ -2,6 +2,8 @@
   "_comment": "MineScripture fallback pool. Refs use internal USFM-style BOOK.CHAPTER.VERSE. Verse TEXT is never stored here — it is always fetched verbatim from YouVersion. The {themes, tone} metadata doubles as the CandidateScorer's semantic-fit table.",
   "tones": ["solemn", "warm", "awe", "calm", "encouraging", "light"],
   "verses": [
+    { "ref": "PSA.84.5",    "display": "Psalm 84:5",          "events": ["first_join"],          "themes": ["pilgrimage", "journey", "strength", "beginnings"], "tone": "warm" },
+    { "ref": "HEB.13.14",   "display": "Hebrews 13:14",       "events": ["first_join"],          "themes": ["pilgrimage", "journey", "hope", "belonging"], "tone": "calm" },
     { "ref": "JER.29.11",   "display": "Jeremiah 29:11",      "events": ["first_join"],          "themes": ["hope", "future", "beginnings"],        "tone": "warm" },
     { "ref": "PSA.121.7-8", "display": "Psalm 121:7-8",       "events": ["first_join"],          "themes": ["protection", "journey", "presence"],   "tone": "warm" },
     { "ref": "2CO.5.17",    "display": "2 Corinthians 5:17",  "events": ["first_join"],          "themes": ["renewal", "beginnings", "identity"],   "tone": "encouraging" },
@@ -66,24 +68,22 @@
   ],
   "event_defaults": {
     "first_join": {
-      "refs": ["JER.29.11", "JOS.1.9", "PSA.121.7-8"],
-      "frame": "Welcome, sojourner.",
-      "title": "Welcome,",
-      "subtitle": "sojourner",
+      "refs": ["PSA.84.5", "HEB.13.14", "JER.29.11", "JOS.1.9", "PSA.121.7-8"],
+      "frame": "Welcome, Sojourner.",
+      "title": "Welcome, {Sojourner}",
       "interpretation": { "resonance": "beginnings", "emotional_arc": "arrival", "emphasis": "hope", "tone": "warm" }
     },
     "rejoin": {
       "refs": ["PSA.121.8", "ISA.43.1", "PSA.139.5"],
-      "frame": "Welcome back, sojourner.",
-      "title": "Welcome back,",
-      "subtitle": "sojourner",
+      "frame": "Welcome back, Sojourner.",
+      "title": "Welcome back, {Sojourner}",
       "_variants_comment": "Rotated, never the same one twice running. A line a player sees every session goes stale in a way a verse does not, because the verse rotates and the frame did not.",
       "variants": [
-        { "frame": "Welcome back, sojourner.",        "title": "Welcome back,", "subtitle": "sojourner" },
-        { "frame": "The sojourner returns.",          "title": "The sojourner returns." },
-        { "frame": "You take up the road again.",     "title": "You take up the road." },
-        { "frame": "Your pilgrimage continues.",      "title": "Your pilgrimage continues." },
-        { "frame": "The way opens before you again.", "title": "The way opens again." }
+        { "frame": "Welcome back, Sojourner.",        "title": "Welcome back, {Sojourner}" },
+        { "frame": "The sojourner returns.",          "title": "The {sojourner} returns." },
+        { "frame": "You take up the road again.",     "title": "You take up the {road}." },
+        { "frame": "Your pilgrimage continues.",      "title": "Your {pilgrimage} continues." },
+        { "frame": "The way opens before you again.", "title": "The {way} opens again." }
       ],
       "interpretation": { "resonance": "return", "emotional_arc": "away_to_back", "emphasis": "belonging", "tone": "warm" }
     },
