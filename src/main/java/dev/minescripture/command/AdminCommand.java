@@ -84,7 +84,7 @@ public final class AdminCommand implements TabExecutor {
                     new DemoEvent("first_join", null, 10)));
 
     private static final List<String> EVENT_KEYS = List.of(
-            "first_join", "first_nightfall", "survived_the_night", "sheltered_till_dawn",
+            "first_join", "rejoin", "first_nightfall", "survived_the_night", "sheltered_till_dawn",
             "eating_bread", "taming", "low_health_survival", "found_diamonds",
             "player_death", "sleep", "thunderstorm", "fellowship");
 
@@ -299,7 +299,7 @@ public final class AdminCommand implements TabExecutor {
                     .filter(s2 -> s2.startsWith(args[1].toLowerCase(Locale.ROOT))).sorted().toList();
         }
         if (args.length == 2 && "trigger".equalsIgnoreCase(args[0])) {
-            return List.of("first_join", "first_nightfall", "survived_the_night", "sheltered_till_dawn",
+            return List.of("first_join", "rejoin", "first_nightfall", "survived_the_night", "sheltered_till_dawn",
                             "eating_bread",
                             "taming", "low_health_survival", "found_diamonds", "player_death",
                             "sleep", "thunderstorm", "fellowship").stream()

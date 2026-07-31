@@ -119,7 +119,7 @@ public final class MineScripturePlugin extends JavaPlugin {
 
         PluginManager pm = getServer().getPluginManager();
         DayCycleClock dayCycle = new DayCycleClock(service, playerState);
-        pm.registerEvents(new LifecycleListener(this, service, journal, moments, dataDir), this);
+        pm.registerEvents(new LifecycleListener(this, service, journal, moments, dataDir, playerState), this);
         pm.registerEvents(new DeathListener(service, moments, dayCycle), this);
         pm.registerEvents(new SurvivalListener(service, dayCycle, this), this);
         pm.registerEvents(new WorldListener(service), this);

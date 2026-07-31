@@ -7,6 +7,10 @@
     { "ref": "2CO.5.17",    "display": "2 Corinthians 5:17",  "events": ["first_join"],          "themes": ["renewal", "beginnings", "identity"],   "tone": "encouraging" },
     { "ref": "JOS.1.9",     "display": "Joshua 1:9",          "events": ["first_join"],          "themes": ["courage", "presence", "journey"],      "tone": "encouraging" },
 
+    { "ref": "PSA.121.8",     "display": "Psalm 121:8",       "events": ["rejoin"],              "themes": ["return", "journey", "watchfulness", "presence"], "tone": "warm" },
+    { "ref": "ISA.43.1",      "display": "Isaiah 43:1",       "events": ["rejoin"],              "themes": ["belonging", "identity", "called"],     "tone": "warm" },
+    { "ref": "PSA.139.5",     "display": "Psalm 139:5",       "events": ["rejoin"],              "themes": ["presence", "known", "surrounded"],     "tone": "calm" },
+
     { "ref": "PSA.30.5",      "display": "Psalm 30:5",        "events": ["survived_the_night"],  "themes": ["morning", "joy", "relief", "endurance"], "tone": "warm" },
     { "ref": "PSA.143.8",     "display": "Psalm 143:8",       "events": ["survived_the_night"],  "themes": ["morning", "trust", "guidance"],        "tone": "calm" },
     { "ref": "PSA.59.16",     "display": "Psalm 59:16",       "events": ["survived_the_night"],  "themes": ["morning", "strength", "refuge", "gratitude"], "tone": "encouraging" },
@@ -66,6 +70,12 @@
       "frame": "Welcome, sojourner.",
       "title": "Welcome, sojourner.",
       "interpretation": { "resonance": "beginnings", "emotional_arc": "arrival", "emphasis": "hope", "tone": "warm" }
+    },
+    "rejoin": {
+      "refs": ["PSA.121.8", "ISA.43.1", "PSA.139.5"],
+      "frame": "Welcome back, sojourner.",
+      "title": "Welcome back, sojourner.",
+      "interpretation": { "resonance": "return", "emotional_arc": "away_to_back", "emphasis": "belonging", "tone": "warm" }
     },
     "first_nightfall": {
       "refs": ["PSA.27.1", "ISA.41.10", "PSA.139.11-12"],

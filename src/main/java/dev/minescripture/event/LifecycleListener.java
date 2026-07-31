@@ -3,6 +3,7 @@ package dev.minescripture.event;
 import dev.minescripture.journal.MarkdownExporter;
 import dev.minescripture.journal.SessionJournal;
 import dev.minescripture.present.MomentPresenter;
+import dev.minescripture.trigger.PlayerStateManager;
 import dev.minescripture.trigger.TriggerContext;
 import dev.minescripture.trigger.TriggerService;
 import org.bukkit.Bukkit;
@@ -23,14 +24,17 @@ public final class LifecycleListener implements Listener {
     private final SessionJournal journal;
     private final MomentPresenter momentPresenter;
     private final Path dataDir;
+    private final PlayerStateManager playerState;
 
     public LifecycleListener(Plugin plugin, TriggerService service, SessionJournal journal,
-                             MomentPresenter momentPresenter, Path dataDir) {
+                             MomentPresenter momentPresenter, Path dataDir,
+                             PlayerStateManager playerState) {
         this.plugin = plugin;
         this.service = service;
         this.journal = journal;
         this.momentPresenter = momentPresenter;
         this.dataDir = dataDir;
+        this.playerState = playerState;
     }
 
     @EventHandler
@@ -38,10 +42,15 @@ public final class LifecycleListener implements Listener {
         Player player = event.getPlayer();
         long now = System.currentTimeMillis();
         service.onJoin(player.getUniqueId(), now);
-        // Let the join screen settle before the very first moment (3 s).
+        // Let the join screen settle before the moment lands (3 s). A player who
+        // has been here before is welcomed back rather than welcomed — first_join
+        // fires once per player ever, so without this a returning player, which is
+        // to say almost everyone almost always, arrives to silence.
+        boolean returning = playerState.milestoneDone(player.getUniqueId(), "first_join");
+        String welcome = returning ? "rejoin" : "first_join";
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             if (player.isOnline()) {
-                service.submit(TriggerContext.of(player.getUniqueId(), "first_join",
+                service.submit(TriggerContext.of(player.getUniqueId(), welcome,
                         System.currentTimeMillis()));
             }
         }, 60L);

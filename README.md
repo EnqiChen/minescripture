@@ -101,10 +101,11 @@ Players never see an error.
 | `/msc demo <event>` | Admin: deterministic scripted story through the real pipeline |
 | `/msc stats` | Admin: fired/suppressed counts, AI budget, cache state |
 
-## The twelve moments
+## The thirteen moments
 
-`first_join` · `first_nightfall` · `survived_the_night` (dawn, if the night came
-after you) · `sheltered_till_dawn` (dawn, if you simply waited it out) ·
+`first_join` · `rejoin` (welcome back, for every visit after the first) ·
+`first_nightfall` · `survived_the_night` (dawn, if the night came after you) ·
+`sheltered_till_dawn` (dawn, if you simply waited it out) ·
 `eating_bread` · `taming` · `low_health_survival` (three hearts or less, still
 standing) · `found_diamonds` · `player_death` → presented at respawn · `sleep` ·
 `thunderstorm` · `fellowship` (two players near each other for a minute)

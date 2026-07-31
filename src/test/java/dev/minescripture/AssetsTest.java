@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class AssetsTest {
 
     static final List<String> ALL_EVENTS = List.of(
-            "first_join", "first_nightfall", "survived_the_night", "sheltered_till_dawn",
+            "first_join", "rejoin", "first_nightfall", "survived_the_night", "sheltered_till_dawn",
             "eating_bread", "taming",
             "low_health_survival", "found_diamonds", "player_death", "sleep", "thunderstorm",
             "fellowship");
@@ -40,8 +40,8 @@ class AssetsTest {
     }
 
     @Test
-    void fallbackPoolHasExactly46Verses() {
-        assertEquals(46, realPool().verses().size());
+    void fallbackPoolHasExactly49Verses() {
+        assertEquals(49, realPool().verses().size());
     }
 
     @Test
@@ -86,7 +86,7 @@ class AssetsTest {
     @Test
     void eventSpecsMatchThePlan() {
         EventSpecs specs = realSpecs();
-        assertEquals(12, specs.all().size());
+        assertEquals(13, specs.all().size());
         for (String event : ALL_EVENTS) {
             assertNotNull(specs.get(event), "missing spec " + event);
         }
