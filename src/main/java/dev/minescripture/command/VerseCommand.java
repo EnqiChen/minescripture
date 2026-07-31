@@ -1,6 +1,8 @@
 package dev.minescripture.command;
 
+import dev.minescripture.config.FallbackPool;
 import dev.minescripture.config.MineScriptureConfig;
+import dev.minescripture.scripture.ScriptureClient;
 import dev.minescripture.journal.BookWriter;
 import dev.minescripture.journal.SessionJournal;
 import dev.minescripture.present.MomentPresenter;
@@ -28,12 +30,16 @@ public final class VerseCommand implements TabExecutor {
     private final PlayerStateManager playerState;
     private final SessionJournal journal;
 
+    private final FallbackPool pool;
+
     public VerseCommand(MineScriptureConfig config, MomentPresenter moments,
-                        PlayerStateManager playerState, SessionJournal journal) {
+                        PlayerStateManager playerState, SessionJournal journal,
+                        FallbackPool pool) {
         this.config = config;
         this.moments = moments;
         this.playerState = playerState;
         this.journal = journal;
+        this.pool = pool;
     }
 
     @Override
@@ -120,18 +126,32 @@ public final class VerseCommand implements TabExecutor {
             player.sendMessage(Component.text("No verse to link yet.", NamedTextColor.GRAY));
             return;
         }
-        String url = "https://www.bible.com/bible/" + config.bibleId + "/" + last.passage().ref();
+        String url = "https://www.bible.com/bible/"
+                + pool.bibleIdFor(last.passage().ref(), config.bibleId)
+                + "/" + last.passage().ref();
         player.sendMessage(Component.text("Read " + last.passage().display() + " on YouVersion: ",
                         NamedTextColor.GRAY)
                 .append(Component.text(url, NamedTextColor.AQUA)
                         .clickEvent(ClickEvent.openUrl(url))));
     }
 
+    /**
+     * Reports the translation actually in use rather than a name written into
+     * the source. This line used to say "Berean Standard Bible" unconditionally,
+     * which would have been a confident lie the moment the config changed.
+     */
     private void translation(Player player) {
-        player.sendMessage(Component.text(
-                "Active translation: Berean Standard Bible (BSB), bible id " + config.bibleId
-                        + ". Additional translations arrive as YouVersion approvals land (NIV requested).",
-                NamedTextColor.GRAY));
+        String abbrev = ScriptureClient.translationAbbrev(config.bibleId);
+        player.sendMessage(Component.text("Active translation: "
+                        + (abbrev.isBlank() ? "bible id " + config.bibleId
+                        : abbrev + " (bible id " + config.bibleId + ")")
+                        + ", served by YouVersion.", NamedTextColor.GRAY));
+        for (FallbackPool.VerseMeta pinned : pool.pinnedVerses()) {
+            player.sendMessage(Component.text("  " + pinned.display() + " is read in "
+                            + ScriptureClient.translationAbbrev(pinned.bibleId())
+                            + " — that verse is quoted for its wording.",
+                    NamedTextColor.DARK_GRAY));
+        }
     }
 
     @Override

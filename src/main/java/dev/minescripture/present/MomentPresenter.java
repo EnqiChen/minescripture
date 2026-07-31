@@ -226,14 +226,17 @@ public final class MomentPresenter implements TriggerService.MomentSink {
             return CompletableFuture.completedFuture(Optional.empty());
         }
         String ref = refs.get(index);
+        // A pinned verse is read from its own translation wherever it surfaces —
+        // whether the pool chose it or Gloo recommended it by name.
+        int fromBible = pool.bibleIdFor(ref, config.bibleId);
         if (scripture == null) {
             // Cache-only mode (no YVP key): serve what the disk knows.
-            Optional<Passage> cached = passageCache.get(config.bibleId, ref);
+            Optional<Passage> cached = passageCache.get(fromBible, ref);
             return cached.isPresent()
                     ? CompletableFuture.completedFuture(cached)
                     : fetchFirstAvailable(refs, index + 1);
         }
-        return passageCache.getOrFetch(config.bibleId, ref, () -> scripture.fetch(ref))
+        return passageCache.getOrFetch(fromBible, ref, () -> scripture.fetch(ref, fromBible))
                 .thenApply(Optional::of)
                 .exceptionally(err -> Optional.empty())
                 .thenCompose(passage -> passage.isPresent()

@@ -270,7 +270,8 @@ public final class AdminCommand implements TabExecutor {
         List<String> refs = List.copyOf(pool.verses().keySet());
         AtomicInteger done = new AtomicInteger();
         CompletableFuture<?>[] futures = refs.stream()
-                .map(ref -> passageCache.getOrFetch(config.bibleId, ref, () -> scripture.fetch(ref))
+                .map(ref -> passageCache.getOrFetch(pool.bibleIdFor(ref, config.bibleId), ref,
+                        () -> scripture.fetch(ref, pool.bibleIdFor(ref, config.bibleId)))
                         .thenRun(done::incrementAndGet)
                         .exceptionally(err -> null))
                 .toArray(CompletableFuture[]::new);

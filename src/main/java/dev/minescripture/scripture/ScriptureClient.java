@@ -32,6 +32,10 @@ public final class ScriptureClient {
     private static final Map<Integer, String> TRANSLATIONS = Map.of(
             3034, "BSB",
             111, "NIV",
+            12, "ASV",
+            2660, "LSV",
+            206, "WEB",
+            1932, "FBV",
             1, "KJV");
 
     private final Http http;
@@ -49,21 +53,37 @@ public final class ScriptureClient {
     }
 
     public CompletableFuture<Passage> fetch(String canonicalRef) {
-        return get(canonicalRef).thenCompose(resp -> {
+        return fetch(canonicalRef, bibleId);
+    }
+
+    /**
+     * A single verse may be pinned to its own translation. Wording differs
+     * between translations in ways that matter to what the game says around the
+     * verse: the welcome calls the player a sojourner, and only some
+     * translations use that word where the verse is quoted. Everything else
+     * stays on the configured Bible, and the attribution always names the
+     * translation actually shown, so a mixed page is never a silent one.
+     */
+    public CompletableFuture<Passage> fetch(String canonicalRef, int fromBible) {
+        return get(canonicalRef, fromBible).thenCompose(resp -> {
             if (resp.ok()) {
-                return CompletableFuture.completedFuture(parse(canonicalRef, resp.body()));
+                return CompletableFuture.completedFuture(parse(canonicalRef, resp.body(), fromBible));
             }
             String expanded = expandedRange(canonicalRef);
             if (resp.status() == 404 && expanded != null) {
-                return get(expanded).thenApply(retry -> {
+                return get(expanded, fromBible).thenApply(retry -> {
                     if (retry.ok()) {
-                        return parse(canonicalRef, retry.body());
+                        return parse(canonicalRef, retry.body(), fromBible);
                     }
                     throw notFoundOrError(canonicalRef, retry.status());
                 });
             }
             throw notFoundOrError(canonicalRef, resp.status());
         });
+    }
+
+    public int defaultBibleId() {
+        return bibleId;
     }
 
     /**
@@ -83,11 +103,15 @@ public final class ScriptureClient {
     }
 
     public String translationAbbrev() {
-        return TRANSLATIONS.getOrDefault(bibleId, "");
+        return translationAbbrev(bibleId);
     }
 
-    private CompletableFuture<Http.Resp> get(String usfm) {
-        String url = baseUrl + "/v1/bibles/" + bibleId + "/passages/"
+    public static String translationAbbrev(int forBible) {
+        return TRANSLATIONS.getOrDefault(forBible, "");
+    }
+
+    private CompletableFuture<Http.Resp> get(String usfm, int fromBible) {
+        String url = baseUrl + "/v1/bibles/" + fromBible + "/passages/"
                 + URLEncoder.encode(usfm, StandardCharsets.UTF_8) + "?format=text";
         return http.get(url, Map.of("X-YVP-App-Key", appKey, "Accept", "application/json"), timeoutMs);
     }
@@ -110,8 +134,12 @@ public final class ScriptureClient {
         return head + "-" + bookChapter + "." + end;
     }
 
-    /** Tolerant response parsing: content/text at root or under data. */
     Passage parse(String canonicalRef, String body) {
+        return parse(canonicalRef, body, bibleId);
+    }
+
+    /** Tolerant response parsing: content/text at root or under data. */
+    Passage parse(String canonicalRef, String body, int fromBible) {
         JsonObject root = JsonUtil.firstJsonObject(body);
         if (root == null) {
             throw new IllegalStateException("Unparseable YouVersion response for " + canonicalRef);
@@ -125,7 +153,8 @@ public final class ScriptureClient {
         String display = JsonUtil.str(source, "reference",
                 JsonUtil.str(source, "human_reference", canonicalRef));
         String copyright = JsonUtil.str(source, "copyright", "");
-        return new Passage(canonicalRef, display, cleanText(text), translationAbbrev(), copyright);
+        return new Passage(canonicalRef, display, cleanText(text),
+                translationAbbrev(fromBible), copyright);
     }
 
     /** Verbatim text, whitespace-normalized; defensive tag strip in case format=text leaks markup. */

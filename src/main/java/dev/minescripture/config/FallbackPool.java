@@ -21,7 +21,13 @@ import java.util.Set;
  */
 public final class FallbackPool {
 
-    public record VerseMeta(String ref, String display, Set<String> events, Set<String> themes, String tone) {
+    /**
+     * @param bibleId 0 means "whatever the server is configured to read"; a real
+     *                id pins this one verse to its own translation, for the rare
+     *                case where the wording itself is load-bearing.
+     */
+    public record VerseMeta(String ref, String display, Set<String> events, Set<String> themes,
+                            String tone, int bibleId) {
     }
 
     /**
@@ -128,7 +134,8 @@ public final class FallbackPool {
                     JsonUtil.str(v, "display", ref),
                     JsonUtil.strSet(v, "events"),
                     JsonUtil.strSet(v, "themes"),
-                    JsonUtil.str(v, "tone", "solemn")
+                    JsonUtil.str(v, "tone", "solemn"),
+                    JsonUtil.integer(v, "bible_id", 0)
             ));
         }
         Map<String, EventDefault> defaults = new LinkedHashMap<>();
@@ -174,6 +181,21 @@ public final class FallbackPool {
 
     public VerseMeta metadata(String ref) {
         return byRef.get(ref);
+    }
+
+    /**
+     * Which Bible this reference should be read from. Almost always the server's
+     * configured one; a pinned verse overrides it. Refs Gloo recommends are not
+     * in the pool at all and simply take the default.
+     */
+    public int bibleIdFor(String ref, int configured) {
+        VerseMeta meta = byRef.get(ref);
+        return meta != null && meta.bibleId() > 0 ? meta.bibleId() : configured;
+    }
+
+    /** Verses deliberately read from a translation other than the configured one. */
+    public List<VerseMeta> pinnedVerses() {
+        return byRef.values().stream().filter(v -> v.bibleId() > 0).toList();
     }
 
     public Map<String, VerseMeta> verses() {

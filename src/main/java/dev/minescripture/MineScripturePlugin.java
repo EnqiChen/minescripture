@@ -128,7 +128,7 @@ public final class MineScripturePlugin extends JavaPlugin {
         Bukkit.getScheduler().runTaskTimer(this, new FellowshipTracker(service), 200L, 200L);
 
         Objects.requireNonNull(getCommand("verse"))
-                .setExecutor(new VerseCommand(config, moments, playerState, journal));
+                .setExecutor(new VerseCommand(config, moments, playerState, journal, pool));
         Objects.requireNonNull(getCommand("msc"))
                 .setExecutor(new AdminCommand(this, config, service, moments, budget, pool,
                         passageCache, scripture));
@@ -154,7 +154,8 @@ public final class MineScripturePlugin extends JavaPlugin {
         List<String> refs = List.copyOf(pool.verses().keySet());
         AtomicInteger ok = new AtomicInteger();
         CompletableFuture<?>[] futures = refs.stream()
-                .map(ref -> cache.getOrFetch(config.bibleId, ref, () -> scripture.fetch(ref))
+                .map(ref -> cache.getOrFetch(pool.bibleIdFor(ref, config.bibleId), ref,
+                        () -> scripture.fetch(ref, pool.bibleIdFor(ref, config.bibleId)))
                         .thenRun(ok::incrementAndGet)
                         .exceptionally(err -> null))
                 .toArray(CompletableFuture[]::new);

@@ -40,8 +40,29 @@ class AssetsTest {
     }
 
     @Test
-    void fallbackPoolHasExactly51Verses() {
-        assertEquals(51, realPool().verses().size());
+    void fallbackPoolHasExactly52Verses() {
+        assertEquals(52, realPool().verses().size());
+    }
+
+    /**
+     * The welcome calls the player a sojourner and quotes a verse to say why, so
+     * that verse has to actually contain the word. BSB and NIV both render
+     * Psalm 119:19 as "stranger"; ASV is the only readable translation available
+     * to us that says "sojourner", so this one verse is pinned to it.
+     */
+    @Test
+    void theSojournerVerseIsPinnedToTheTranslationThatUsesTheWord() {
+        FallbackPool pool = realPool();
+        FallbackPool.VerseMeta meta = pool.metadata("PSA.119.19");
+        assertNotNull(meta, "the welcome's explaining verse must be in the pool");
+        assertEquals(12, meta.bibleId(), "pinned to ASV");
+        assertEquals(12, pool.bibleIdFor("PSA.119.19", 3034), "the pin overrides the configured Bible");
+        assertEquals(3034, pool.bibleIdFor("JER.29.11", 3034), "every other verse follows the config");
+        assertEquals(3034, pool.bibleIdFor("SOMETHING.GLOO.PICKED", 3034),
+                "a ref outside the pool takes the default");
+        assertEquals(1, pool.pinnedVerses().size(), "pinning is the rare exception, not a habit");
+        assertEquals("PSA.119.19", realPool().defaultsFor("first_join").refs().get(0),
+                "it leads the arrival defaults, so a Gloo outage still explains the word");
     }
 
     @Test

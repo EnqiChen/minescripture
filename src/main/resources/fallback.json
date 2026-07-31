@@ -2,6 +2,7 @@
   "_comment": "MineScripture fallback pool. Refs use internal USFM-style BOOK.CHAPTER.VERSE. Verse TEXT is never stored here — it is always fetched verbatim from YouVersion. The {themes, tone} metadata doubles as the CandidateScorer's semantic-fit table.",
   "tones": ["solemn", "warm", "awe", "calm", "encouraging", "light"],
   "verses": [
+    { "ref": "PSA.119.19",  "display": "Psalm 119:19",        "events": ["first_join"],          "themes": ["sojourner", "pilgrimage", "journey", "beginnings"], "tone": "warm", "bible_id": 12, "_why": "Pinned to ASV. This verse is quoted to explain why the game calls the player a sojourner, and ASV is the only readable translation available to us that uses the word — BSB and NIV both render it 'stranger'." },
     { "ref": "PSA.84.5",    "display": "Psalm 84:5",          "events": ["first_join"],          "themes": ["pilgrimage", "journey", "strength", "beginnings"], "tone": "warm" },
     { "ref": "HEB.13.14",   "display": "Hebrews 13:14",       "events": ["first_join"],          "themes": ["pilgrimage", "journey", "hope", "belonging"], "tone": "calm" },
     { "ref": "JER.29.11",   "display": "Jeremiah 29:11",      "events": ["first_join"],          "themes": ["hope", "future", "beginnings"],        "tone": "warm" },
@@ -68,7 +69,7 @@
   ],
   "event_defaults": {
     "first_join": {
-      "refs": ["PSA.84.5", "HEB.13.14", "JER.29.11", "JOS.1.9", "PSA.121.7-8"],
+      "refs": ["PSA.119.19", "PSA.84.5", "HEB.13.14", "JER.29.11", "JOS.1.9", "PSA.121.7-8"],
       "frame": "Welcome, Sojourner.",
       "title": "Welcome, {Sojourner}",
       "interpretation": { "resonance": "beginnings", "emotional_arc": "arrival", "emphasis": "hope", "tone": "warm" }
