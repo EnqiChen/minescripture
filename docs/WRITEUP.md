@@ -229,6 +229,39 @@ format with no verse frame and no reference line.
 Serious moment → always Scripture, verbatim from YouVersion. Comedic moment →
 humor that can never be mistaken for Scripture. The two never mix.
 
+## How this reaches people
+
+The instinct is to ask how many players one server can hold. That is the wrong
+axis. Minecraft communities are not a handful of enormous servers; they are
+hundreds of thousands of small ones, and the ones this is for are smaller still —
+a youth group with fifteen regulars, a family server, a Christian community of a
+few dozen. Reach here is servers multiplied by players, not players per server.
+
+That is what makes the deployment story the impact story. One jar, dropped into a
+server an admin already runs, and every player on it is included from the next
+restart — with no client install, no launcher, no per-person setup, and nothing
+asked of the people it is meant to reach. A thousand community servers of thirty
+players is thirty thousand people, and it grows by adoption rather than hardware.
+
+There is a real ceiling, and it is worth naming precisely: **the AI budget, not
+the player count.** The default allows a hundred interpretations per server per
+hour, which is generous for twenty players and thin for two hundred. Past that
+point most moments serve from the curated pool — still Scripture, still timed to
+the moment, but chosen locally rather than interpreted.
+
+That limit is a cost control rather than a capacity one. Every interpretation
+spends the administrator's own Gloo credits, so the shipped default is
+deliberately conservative: it is not our money, and a plugin that quietly runs up
+someone's bill has failed them regardless of what it put on screen. A server that
+wants fuller coverage raises the number.
+
+Which points at the one piece of infrastructure this design still wants. Today an
+administrator needs their own YouVersion and Gloo credentials, and for a youth
+pastor with a Minecraft server that is a real barrier — the same barrier, in
+miniature, that keeps this kind of thing from reaching the people it is for. A
+hosted key proxy removes it, and turns out to be the same artifact as the service
+that would let other games call this at all. Building it once answers both.
+
 ## Privacy
 
 Story Memory is ephemeral gameplay context, not a player profile. MineScripture
