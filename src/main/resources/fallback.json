@@ -64,7 +64,7 @@
     "first_join": {
       "refs": ["JER.29.11", "JOS.1.9", "PSA.121.7-8"],
       "frame": "Welcome, sojourner.",
-      "title": "Welcome",
+      "title": "Welcome, sojourner.",
       "interpretation": { "resonance": "beginnings", "emotional_arc": "arrival", "emphasis": "hope", "tone": "warm" }
     },
     "first_nightfall": {
