@@ -93,8 +93,11 @@ public final class MomentInterpreter implements TriggerService.InterpretationSou
             return CompletableFuture.failedFuture(new IllegalStateException("Gloo credentials not configured"));
         }
         return gloo.complete(SYSTEM_PROMPT, buildUserMessage(ctx, story))
-                .thenApply(content -> {
-                    Interpretation interp = parse(content);
+                .thenApply(completion -> {
+                    Interpretation interp = parse(completion.content());
+                    if (interp != null) {
+                        interp = interp.withModel(completion.model());
+                    }
                     if (interp == null) {
                         throw new IllegalStateException("Unparseable interpretation");
                     }

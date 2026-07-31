@@ -227,11 +227,17 @@ public final class TriggerService {
 
     private void predictable(TriggerContext ctx, StoryMemory story, TriggerPolicy.Decision decision, long postVersion) {
         MomentProfileCache.Entry cached = profileCache.get(ctx.playerId(), ctx.eventKey());
-        if (cached != null) {
-            deliver(ctx, cached.interpretation(), Origin.CACHE, decision.deathDepth());
-        } else {
-            deliver(ctx, defaultFor(ctx), Origin.DEFAULT, decision.deathDepth());
+        if (cached == null) {
+            // Nothing cached. Serving a curated verse now and asking Gloo for one
+            // "for next time" only pays off if this event fires again — and
+            // first_join and first_nightfall fire once per player ever, so next
+            // time never comes. Those moments would be curated for their entire
+            // life. Wait for a real reading instead, on the same bounded terms as
+            // a sudden moment; if it does not arrive, the curated verse still does.
+            sudden(ctx, story, decision, postVersion);
+            return;
         }
+        deliver(ctx, cached.interpretation(), Origin.CACHE, decision.deathDepth());
         if (decision.useAi() && source != null) {
             source.interpret(ctx, story)
                     .orTimeout(config.timeoutBackgroundMs, TimeUnit.MILLISECONDS)
@@ -239,8 +245,6 @@ public final class TriggerService {
                         if (err == null && interp != null) {
                             profileCache.put(ctx.playerId(), ctx.eventKey(), interp, postVersion, ctx.at());
                         } else {
-                            // Silent restock failures leave the cache empty forever,
-                            // so every predictable moment quietly serves a default.
                             diagnostics.accept("[" + ctx.eventKey() + "] background restock failed: "
                                     + (err == null ? "no interpretation" : err.getClass().getSimpleName()));
                         }

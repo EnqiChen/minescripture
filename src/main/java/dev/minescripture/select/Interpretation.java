@@ -20,8 +20,19 @@ public record Interpretation(
         String tone,
         List<String> recommendedRefs,
         String quip,
-        String reasoning
+        String reasoning,
+        String model
 ) {
+    public Interpretation(String resonance, String emotionalArc, String emphasis, String tone,
+                          List<String> recommendedRefs, String quip, String reasoning) {
+        this(resonance, emotionalArc, emphasis, tone, recommendedRefs, quip, reasoning, null);
+    }
+
+    public Interpretation withModel(String routedModel) {
+        return new Interpretation(resonance, emotionalArc, emphasis, tone,
+                recommendedRefs, quip, reasoning, routedModel);
+    }
+
     public boolean isLight() {
         return "light".equalsIgnoreCase(tone);
     }

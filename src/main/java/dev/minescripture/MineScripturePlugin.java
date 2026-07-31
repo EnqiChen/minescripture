@@ -175,7 +175,8 @@ public final class MineScripturePlugin extends JavaPlugin {
             return;
         }
         Abridger abridger = new Abridger(
-                prompt -> gloo.complete("You shorten Bible verses by deleting words only.", prompt),
+                prompt -> gloo.complete("You shorten Bible verses by deleting words only.", prompt)
+                        .thenApply(GlooClient.Completion::content),
                 config.abridgeOverChars);
         List<Passage> tooLong = cache.longerThan(config.bibleId, config.abridgeOverChars);
         if (tooLong.isEmpty()) {

@@ -17,6 +17,11 @@ import java.util.function.Consumer;
  */
 public final class GlooClient {
 
+    /** The reply plus which model Gloo routed it to — evidence, not decoration. */
+    public record Completion(String content, String model) {
+    }
+
+
     public static final String DEFAULT_BASE = "https://platform.ai.gloo.com";
 
     private final Http http;
@@ -34,7 +39,7 @@ public final class GlooClient {
         this.log = log;
     }
 
-    public CompletableFuture<String> complete(String systemMessage, String userMessage) {
+    public CompletableFuture<Completion> complete(String systemMessage, String userMessage) {
         String body = buildBody(systemMessage, userMessage);
         return tokens.token()
                 .thenCompose(token -> post(token, body))
@@ -42,9 +47,9 @@ public final class GlooClient {
                     if (resp.status() == 401) {
                         return tokens.refresh()
                                 .thenCompose(fresh -> post(fresh, body))
-                                .thenApply(this::content);
+                                .thenApply(this::completion);
                     }
-                    return CompletableFuture.completedFuture(content(resp));
+                    return CompletableFuture.completedFuture(completion(resp));
                 });
     }
 
@@ -75,7 +80,7 @@ public final class GlooClient {
         return m;
     }
 
-    private String content(Http.Resp resp) {
+    private Completion completion(Http.Resp resp) {
         if (!resp.ok()) {
             throw new IllegalStateException("Gloo completion failed: HTTP " + resp.status());
         }
@@ -83,9 +88,8 @@ public final class GlooClient {
         if (root == null) {
             throw new IllegalStateException("Gloo completion returned no JSON");
         }
-        if (root.has("model")) {
-            log.accept("Gloo routed model: " + root.get("model").getAsString());
-        }
+        String model = root.has("model") ? root.get("model").getAsString() : "unknown";
+        log.accept("Gloo routed model: " + model);
         JsonArray choices = JsonUtil.array(root, "choices");
         if (choices.isEmpty()) {
             throw new IllegalStateException("Gloo completion had no choices");
@@ -94,6 +98,6 @@ public final class GlooClient {
         if (message == null || !message.has("content")) {
             throw new IllegalStateException("Gloo completion had no message content");
         }
-        return message.get("content").getAsString();
+        return new Completion(message.get("content").getAsString(), model);
     }
 }

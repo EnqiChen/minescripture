@@ -140,7 +140,7 @@ class TriggerServiceTest {
     }
 
     @Test
-    void predictablePathServesInstantlyFromCacheWhileRestockingBehind(@TempDir Path tmp) throws Exception {
+    void aColdCacheWaitsForARealReadingRatherThanServingACuratedOne(@TempDir Path tmp) throws Exception {
         AtomicInteger sourceCalls = new AtomicInteger();
         RecordingSink sink = new RecordingSink(2);
         TriggerService svc = service(MineScriptureConfig.builder().build(), tmp,
@@ -152,17 +152,20 @@ class TriggerServiceTest {
         svc.onJoin(P1, 0);
         // First bread: cache empty → curated default presents instantly, restock happens async.
         svc.submit(TriggerContext.of(P1, "eating_bread", 1_000L));
-        // Second bread, well past the event cooldown: the player sees the cached
-        // Gloo reading instantly while a fresh one is fetched behind it.
+        // Second bread, well past the event cooldown: now there IS a cached
+        // reading, so it appears instantly while a fresh one is fetched behind it.
         svc.submit(TriggerContext.of(P1, "eating_bread", 2_000_000L));
         assertTrue(sink.latch.await(2, TimeUnit.SECONDS));
 
-        assertEquals(TriggerService.Origin.DEFAULT, sink.presented.get(0).origin());
+        // The first firing must not be a curated verse. Serving one and caching a
+        // real reading "for next time" is worthless for a moment that fires once
+        // per player ever, and it made most of the demo look like a lookup table.
+        assertEquals(TriggerService.Origin.GLOO, sink.presented.get(0).origin(),
+                "a cold cache should wait for Gloo, not fall back to the pool");
         assertEquals(TriggerService.Origin.CACHE, sink.presented.get(1).origin());
-        assertEquals("gratitude", sink.presented.get(1).interp().emphasis(),
-                "second serve comes from the Gloo-restocked cache");
+        assertEquals("gratitude", sink.presented.get(0).interp().emphasis());
         assertEquals(2, sourceCalls.get(),
-                "each fired moment is genuinely new information and earns its own reading");
+                "one call for the cold moment, one to restock behind the cached serve");
     }
 
     @Test

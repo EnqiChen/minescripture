@@ -147,12 +147,28 @@ public final class AdminCommand implements TabExecutor {
                     + " — never presented as Scripture."));
             return;
         }
-        sender.sendMessage(line("Interpreted & recommended by Gloo AI Studio: ",
-                last.interp().resonance() + " → " + last.interp().emotionalArc()
-                        + " (emphasis: " + last.interp().emphasis() + ") → " + last.passage().ref()));
-        sender.sendMessage(line("Verified by MineScripture: ",
-                "canonical, retrievable, unseen this session. [source: " + last.origin() + "]"));
-        sender.sendMessage(line("Text: ", "YouVersion (" + last.passage().translation() + ") — verbatim."));
+        boolean fromGloo = last.origin() == TriggerService.Origin.GLOO;
+        var interp = last.interp();
+        if (fromGloo) {
+            sender.sendMessage(line("Interpreted live by Gloo AI Studio: ",
+                    interp.model() == null ? "auto-routed" : interp.model()));
+            if (interp.reasoning() != null && !interp.reasoning().isBlank()) {
+                sender.sendMessage(line("  its reasoning: ", interp.reasoning()));
+            }
+        } else {
+            sender.sendMessage(line("Source: ", "curated fallback ["
+                    + last.origin() + "] — Gloo was unavailable or timed out"));
+        }
+        sender.sendMessage(line("  read as: ", interp.resonance() + " → "
+                + interp.emotionalArc().replace('_', ' ')
+                + ", emphasis " + interp.emphasis() + ", tone " + interp.tone()));
+        if (!interp.recommendedRefs().isEmpty()) {
+            sender.sendMessage(line("  it suggested: ", String.join(", ", interp.recommendedRefs())));
+        }
+        sender.sendMessage(line("Verified by MineScripture: ", last.passage().ref()
+                + " — canonical, retrievable from YouVersion, unseen this session"));
+        sender.sendMessage(line("Text: ", "YouVersion (" + last.passage().translation() + ") — verbatim"
+                + (last.passage().isAbridged() ? ", shortened by deletion only" : "")));
     }
 
     private void trigger(CommandSender sender, String[] args, boolean demo) {
