@@ -3,7 +3,7 @@
 How the two human-reviewed asset files were built, and the rules a reviewer
 should apply when changing them.
 
-## `fallback.json` — 40 references
+## `fallback.json` — 52 references
 
 The curated pool serves three jobs at once, which is why its metadata matters
 more than its size:

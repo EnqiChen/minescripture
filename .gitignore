@@ -23,3 +23,7 @@ tools/
 .DS_Store
 
 # Local RCON convenience (password lives in run/server.properties, already ignored)
+
+# Python bytecode (embeds absolute local paths)
+__pycache__/
+*.pyc

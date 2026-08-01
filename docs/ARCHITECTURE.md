@@ -25,7 +25,7 @@ and well-matched.
 dev.minescripture
 ├── MineScripturePlugin      wiring, graceful degradation, cache warmer
 ├── config/    MineScriptureConfig · EventSpec(s) · FallbackPool · HumorPool
-├── event/     the ten listeners · NightfallClock · FellowshipTracker · Causes
+├── event/     the five listeners · NightfallClock · FellowshipTracker · Causes
 ├── trigger/   TriggerService · TriggerPolicy · AiBudgetGuard
 │              StoryMemory · PlayerStateManager · TriggerContext
 ├── select/    MomentInterpreter · GlooClient · GlooTokenManager
@@ -193,7 +193,7 @@ The power is timing, not chrome.
 
 ## Testing
 
-47 unit tests, none of which need a running server.
+97 unit tests, none of which need a running server.
 
 - `TriggerPolicyTest` — the full gate, including the AFK grinder: 40 rapid
   near-death events yield exactly one presentation and one AI call
@@ -204,5 +204,5 @@ The power is timing, not chrome.
 - `CandidateScorerTest` — the Genesis-on-a-death trap, novelty math, event fit
 - `LevityGuardTest` — blocks `John 3:16`, `Gen 1`, quoted text; passes the
   curated pool
-- `AssetsTest` — validates the shipped JSON: 40 verses, 15 quips, every event
+- `AssetsTest` — validates the shipped JSON: 52 verses, 15 quips, every event
   covered, no curated quip resembling a citation
