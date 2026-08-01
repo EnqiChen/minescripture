@@ -12,6 +12,7 @@ import dev.minescripture.scripture.ScriptureClient;
 import dev.minescripture.select.CandidateScorer;
 import dev.minescripture.select.Interpretation;
 import dev.minescripture.select.LevityGuard;
+import dev.minescripture.select.MomentInterpreter;
 import dev.minescripture.select.RefValidator;
 import dev.minescripture.select.SessionVerseMemory;
 import dev.minescripture.trigger.PlayerStateManager;
@@ -377,9 +378,21 @@ public final class MomentPresenter implements TriggerService.MomentSink {
      * recorded rather than inferred: /msc explain must not claim the AI wrote
      * something a human did.
      */
+    /**
+     * Lines a "Gloo-written" quip is not allowed to be: the prompt's own worked
+     * example, and every human-written line in the pool. Without this the model
+     * can hand back what we showed it and the system will report the AI wrote it.
+     */
+    private List<String> mustNotEcho() {
+        List<String> forbidden = new ArrayList<>();
+        forbidden.add(MomentInterpreter.QUIP_EXAMPLE);
+        humor.all().forEach(q -> forbidden.add(q.text()));
+        return forbidden;
+    }
+
     private ChosenQuip chooseQuip(TriggerContext ctx, Interpretation interp) {
         if (config.levityAi) {
-            if (LevityGuard.valid(interp.quip())) {
+            if (LevityGuard.valid(interp.quip(), mustNotEcho())) {
                 String text = interp.quip().trim();
                 log.info("[" + ctx.eventKey() + "] levity from Gloo: " + text);
                 return new ChosenQuip(text, QuipSource.GLOO);

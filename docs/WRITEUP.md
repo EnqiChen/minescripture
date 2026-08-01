@@ -103,12 +103,33 @@ funny — a cactus, a fall into your own farm pit. Knowing reverence from comedy
 exactly the kind of call a rule table makes badly and a language model makes well.
 
 **The canon is bigger than any list we could write.** Gloo recommends from all of
-Scripture. Our curated pool of forty references exists as a safety net, not as
-the menu. Over a long-running server, that difference is the difference between a
+Scripture. Our curated pool of fifty-two references exists as a safety net, not
+as the menu. Over a long-running server, that difference is the difference between a
 narrative layer and a rotation of the same twelve famous verses.
 
 That last point is also the product argument. When MineScripture expands beyond
 Minecraft, the recommendation layer is what scales.
+
+### And where it does not
+
+One moment is deliberately not interpreted. A first arrival has no session story
+— nothing has happened yet — so a model asked to read it can only guess from an
+event name. Ours did, twice. It offered Genesis 1:1, which is a lovely verse for
+a newly generated world and says nothing about the greeting beside it. Told what
+the greeting was trying to say, it offered 1 Peter 2:11, whose opening clause is
+exactly right and whose second urges a brand-new player to abstain from sinful
+desires. Both defensible. Neither a welcome.
+
+So the welcome is written rather than interpreted, and its verse is fixed. That
+decision needed its own vocabulary in the code: the gate reports **curated by
+design**, distinct from the curated *fallback* used when the model was asked and
+did not answer. Without the distinction, the admin trace would have told a judge
+"Gloo was unavailable or timed out" about a moment where Gloo was working
+perfectly and simply had not been asked — a system misrepresenting its own
+engineering as an outage.
+
+Knowing where a model does not belong is part of using one well. Everything with
+a story to read still asks.
 
 ## Engineering the moment
 
@@ -220,6 +241,21 @@ version of the admin panel reported "AI-generated" whenever the feature was
 switched on, which would have been a lie in exactly the case that matters — a
 quip the guard had rejected and quietly replaced.
 
+That instinct was right, and on the last day it caught something worse. The
+prompt carries a worked example so the model knows the shape a quip should take.
+Gloo handed the example straight back — word for word, punctuation included — and
+the system recorded it as written by Gloo, which was true of the API call and
+false to anyone reading it. **An echo is not authorship.** The guard now rejects
+any quip that repeats the prompt's own example or any line in the curated pool,
+comparing on letters alone so a changed comma or a word tacked on the end cannot
+launder it. Rejected lines fall through to the pool and are labelled as curated.
+
+We found it by noticing that a joke looked familiar. Nothing in the tests or the
+logs would have raised it, because at every layer the code was doing exactly what
+it claimed. That is the failure mode this project kept producing, and it is why
+almost every prompt rule here has a code-side twin: the model is trusted for
+judgement, never for compliance.
+
 The boundary is absolute and enforced in code. A validator rejects any generated
 line that runs long, contains quotation marks, contains a chapter-and-verse
 pattern, or contains a Bible book name followed by a number. Anything rejected
@@ -228,6 +264,25 @@ format with no verse frame and no reference line.
 
 Serious moment → always Scripture, verbatim from YouVersion. Comedic moment →
 humor that can never be mistaken for Scripture. The two never mix.
+
+### Which words, exactly
+
+Scripture is served in the **New International Version**, licensed through
+YouVersion's fast-track agreement with Biblica. That licensing is worth naming,
+because it is the part of the platform a developer would otherwise spend months
+on: the API exposes 1,125 versions across nine publisher agreements, and reaching
+one is a single acceptance in a dashboard rather than a negotiation. Before
+switching we verified all 52 curated references resolve in NIV — versification
+differs between translations, and a missing verse would have surfaced as a silent
+fallback rather than an error.
+
+**One verse is deliberately read in a different translation.** The first-join
+greeting calls the player a sojourner and quotes Psalm 119:19 to say why, which
+only works if the verse contains the word. NIV and the Berean Standard Bible both
+render it "stranger"; of the translations reachable here, only the American
+Standard Version says "sojourner" in language that still reads well on screen. So
+that one verse is pinned to ASV in the pool, and the on-screen attribution always
+names the translation actually shown. A mixed page is never a silent one.
 
 ## How this reaches people
 

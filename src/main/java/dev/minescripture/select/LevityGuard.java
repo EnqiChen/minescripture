@@ -26,7 +26,26 @@ public final class LevityGuard {
     private LevityGuard() {
     }
 
+    /** Fewer than this many shared characters is coincidence, not an echo. */
+    private static final int ECHO_MIN_LENGTH = 20;
+
     public static boolean valid(String quip) {
+        return valid(quip, java.util.Set.of());
+    }
+
+    /**
+     * @param mustNotEcho lines the model must not simply hand back: the prompt's
+     *                    own worked example and every curated quip. Shown an
+     *                    example, a model will sometimes return it verbatim, and
+     *                    the result is indistinguishable in code from an original
+     *                    line while being nothing of the kind — it was logged as
+     *                    "written by Gloo" and would have been shown to judges as
+     *                    proof the AI writes its own humour. Rejecting it sends
+     *                    the moment to the curated pool, which is labelled
+     *                    honestly. Every prompt rule here has a code-side twin;
+     *                    this is the twin for "never repeat the example".
+     */
+    public static boolean valid(String quip, java.util.Collection<String> mustNotEcho) {
         if (quip == null) {
             return false;
         }
@@ -47,6 +66,31 @@ public final class LevityGuard {
                 return false;
             }
         }
-        return true;
+        return !echoes(trimmed, mustNotEcho);
+    }
+
+    /**
+     * Containment rather than equality, because the echo came back both exactly
+     * and with a word tacked on the end ("...that cactus" and "...that cactus
+     * coming"). Either direction counts.
+     */
+    static boolean echoes(String quip, java.util.Collection<String> mustNotEcho) {
+        String mine = fingerprint(quip);
+        for (String other : mustNotEcho) {
+            String theirs = fingerprint(other);
+            if (theirs.length() < ECHO_MIN_LENGTH) {
+                continue;
+            }
+            if (mine.contains(theirs) || theirs.contains(mine)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Letters and digits only: punctuation and spacing are not what makes it an echo. */
+    static String fingerprint(String text) {
+        return text == null ? ""
+                : text.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]", "");
     }
 }

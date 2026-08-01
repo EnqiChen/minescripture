@@ -11,7 +11,7 @@
     "low_health_survival": { "path": "sudden",      "tier": "standard", "priority": false, "cooldown_s": 600, "levity": true },
     "found_diamonds":      { "path": "sudden",      "tier": "major",    "priority": true,  "cooldown_s": 0,    "once": "persistent", "debounce_s": 300 },
     "player_death":        { "path": "sudden",      "tier": "major",    "priority": true,  "cooldown_s": 60, "levity": true },
-    "sleep":               { "path": "predictable", "tier": "major",    "priority": true,  "cooldown_s": 1200 },
+    "sleep":               { "path": "predictable", "tier": "major",    "priority": true,  "cooldown_s": 30 },
     "thunderstorm":        { "path": "predictable", "tier": "standard", "priority": false, "cooldown_s": 1800, "scope": "world" },
     "fellowship":          { "path": "predictable", "tier": "standard", "priority": false, "cooldown_s": 0,    "once": "session_pair" }
   }

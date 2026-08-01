@@ -139,8 +139,20 @@ public final class AdminCommand implements TabExecutor {
         String cause = last.ctx().cause() == null ? "" : " (cause: " + last.ctx().cause() + ")";
         sender.sendMessage(line("Moment: ", last.ctx().eventKey() + cause + ", " + minutes + " min into session."));
         if (last.isLevity()) {
-            sender.sendMessage(line("Tone judged by Gloo AI Studio: ", "light — humor served instead of Scripture."));
+            // The reasoning and the routed model are the only parts of this trace
+            // that evidence anything, and the humour branch was omitting both —
+            // so the one moment whose authorship a reader is most likely to doubt
+            // was also the one explaining itself the least.
+            var quipInterp = last.interp();
             boolean fromGloo = last.quipSource() == MomentPresenter.QuipSource.GLOO;
+            if (last.origin() == TriggerService.Origin.GLOO) {
+                sender.sendMessage(line("Judged live by Gloo AI Studio: ",
+                        quipInterp.model() == null ? "auto-routed" : quipInterp.model()));
+                if (quipInterp.reasoning() != null && !quipInterp.reasoning().isBlank()) {
+                    sender.sendMessage(line("  its reasoning: ", quipInterp.reasoning()));
+                }
+            }
+            sender.sendMessage(line("  read as: ", "tone light — humour served instead of Scripture."));
             sender.sendMessage(line("Text: ", (fromGloo
                     ? "written by Gloo AI Studio, passed LevityGuard"
                     : "curated, human-written (Gloo's quip was unavailable or rejected)")

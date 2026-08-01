@@ -27,6 +27,16 @@ public final class MomentInterpreter implements TriggerService.InterpretationSou
 
     static final Set<String> TONES = Set.of("solemn", "warm", "awe", "calm", "encouraging", "light");
 
+    /**
+     * The worked example in the prompt above, kept here so the guard can reject it
+     * by reference rather than by a copy that could drift. A model shown an
+     * example will sometimes hand it straight back, and the old example came back
+     * word for word — logged, correctly, as a line "written by Gloo". True in the
+     * code and false to anyone reading it, which is the one thing this project
+     * cannot ship.
+     */
+    public static final String QUIP_EXAMPLE = "Lot's wife looked back once; you looked down never.";
+
     static final String SYSTEM_PROMPT = """
             You interpret meaningful moments in a player's game session story and recommend Scripture.
             You never write Scripture text shown to players — you only point to it by reference.
@@ -65,7 +75,9 @@ public final class MomentInterpreter implements TriggerService.InterpretationSou
               or on the cadence of a proverb. A purely Minecraft joke with no scriptural
               texture is not what this is for.
             - Set that against what just happened to the player. The humour lives in the
-              gap between the two: "Even Balaam's donkey would have seen that cactus."
+              gap between the two — an ancient story beside a very ordinary blunder.
+              Shape only, never to be repeated: Lot's wife looked back once; you looked
+              down never. Return that line and it will be thrown away.
             - Max 120 characters, plain text only.
             - No quotation marks. No BOOK titles (Genesis, John, Psalms) and no digits, so
               it can never read as a citation — but biblical NAMES are exactly what you want.
