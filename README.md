@@ -190,7 +190,6 @@ translation actually shown. `/verse translation` lists the exception in game.
 ## Documentation
 
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — how the pieces fit
-- [`docs/demo-script.md`](docs/demo-script.md) — the demo walkthrough
 - [`docs/curation/`](docs/curation/) — prompts and curation notes
 
 ## License
