@@ -49,9 +49,16 @@ public final class FallbackPool {
         return wording == null ? "" : wording.replace("{", "").replace("}", "");
     }
 
+    /**
+     * @param aiNote what this moment is trying to say, in our words, passed to the
+     *               model alongside the gameplay facts. The greeting calls the
+     *               player a sojourner; without being told that, a model reading
+     *               only "first_join" recommended Genesis 1:1 — a fine verse for
+     *               a new world, and no help at all in explaining the word.
+     */
     public record EventDefault(List<String> refs, String frame, String title,
                                Map<String, String> framesByPhase, List<Variant> variants,
-                               Interpretation interpretation) {
+                               Interpretation interpretation, String aiNote) {
 
         /**
          * A moment that recurs needs more than one way of announcing itself. The
@@ -172,11 +179,18 @@ public final class FallbackPool {
                                 List.copyOf(refs),
                                 null,
                                 "curated default"
-                        )
+                        ),
+                        JsonUtil.str(d, "ai_note", null)
                 ));
             }
         }
         return new FallbackPool(byRef, defaults);
+    }
+
+    /** What we are trying to say with this moment, for the model to read. */
+    public String aiNoteFor(String eventKey) {
+        EventDefault d = eventDefaults.get(eventKey);
+        return d == null ? null : d.aiNote();
     }
 
     public VerseMeta metadata(String ref) {

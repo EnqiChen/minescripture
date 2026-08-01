@@ -92,7 +92,8 @@ public final class MineScripturePlugin extends JavaPlugin {
                     config.glooClientId, config.glooClientSecret);
             gloo = new GlooClient(http, GlooClient.DEFAULT_BASE, tokens, config,
                     msg -> getLogger().info(msg));
-            interpreter = new MomentInterpreter(gloo, config, msg -> getLogger().info(msg));
+            interpreter = new MomentInterpreter(gloo, config, msg -> getLogger().info(msg),
+                    pool::aiNoteFor);
         } else {
             getLogger().warning("Gloo credentials missing (MSC_GLOO_ID / MSC_GLOO_SECRET) — "
                     + "curated default interpretations only.");

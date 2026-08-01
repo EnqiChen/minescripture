@@ -80,16 +80,36 @@ public final class MomentInterpreter implements TriggerService.InterpretationSou
             Real peril is different — a creeper at point-blank range, a cave-in, a mob
             you barely escaped — and stays "encouraging".
             Genuine loss, first-time wonder, and fellowship are never "light".
+
+            If the moment carries "what_this_moment_means", that is the game's own framing
+            for what it is saying to the player around your verse — the words on screen
+            above it. Let it steer which Scripture you recommend. It tells you the intent;
+            choosing the passage that serves it is still yours.
             """;
 
     private final GlooClient gloo;
     private final MineScriptureConfig config;
     private final Consumer<String> log;
+    private final java.util.function.Function<String, String> framing;
 
-    public MomentInterpreter(GlooClient gloo, MineScriptureConfig config, Consumer<String> log) {
+    /**
+     * @param framing what a given moment is trying to say, in the product's own
+     *                words. Gameplay facts alone under-describe some moments: a
+     *                first arrival has no story yet, and a model reading only
+     *                "first_join" recommended Genesis 1:1 over a greeting written
+     *                to be explained by a verse about sojourning. The note steers
+     *                the reading without dictating the verse — Gloo still chooses.
+     */
+    public MomentInterpreter(GlooClient gloo, MineScriptureConfig config, Consumer<String> log,
+                             java.util.function.Function<String, String> framing) {
         this.gloo = gloo;
         this.config = config;
         this.log = log;
+        this.framing = framing;
+    }
+
+    public MomentInterpreter(GlooClient gloo, MineScriptureConfig config, Consumer<String> log) {
+        this(gloo, config, log, key -> null);
     }
 
     @Override
@@ -121,6 +141,10 @@ public final class MomentInterpreter implements TriggerService.InterpretationSou
             msg.put("cause", ctx.cause());
         }
         msg.put("session_story", story.toContext(System.currentTimeMillis(), 8));
+        String note = framing.apply(ctx.eventKey());
+        if (note != null && !note.isBlank()) {
+            msg.put("what_this_moment_means", note);
+        }
         return JsonUtil.GSON.toJson(msg);
     }
 
