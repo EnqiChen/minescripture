@@ -32,7 +32,13 @@ import java.util.stream.Collectors;
  */
 public final class TriggerService {
 
-    public enum Origin { GLOO, CACHE, DEFAULT }
+    /**
+     * Where a moment's reading came from. DEFAULT means the AI was asked and did
+     * not answer in time; CURATED means it was never asked, because the event is
+     * one we deliberately script. Collapsing the two would make a designed choice
+     * indistinguishable from an outage in every log line and every trace.
+     */
+    public enum Origin { GLOO, CACHE, DEFAULT, CURATED }
 
     public interface InterpretationSource {
         CompletableFuture<Interpretation> interpret(TriggerContext ctx, StoryMemory story);
@@ -225,10 +231,17 @@ public final class TriggerService {
                         }
                     });
         } else {
-            // No AI granted (over budget): a sudden moment must never show a
-            // stale pre-event profile — the curated default is the honest pick.
-            deliver(ctx, defaultFor(ctx), Origin.DEFAULT, decision.deathDepth());
+            // No AI: either this event is scripted by design, or we are over
+            // budget. A sudden moment must never show a stale pre-event profile,
+            // so the curated default is the honest pick either way — but which of
+            // the two reasons applies is recorded rather than blurred together.
+            deliver(ctx, defaultFor(ctx), originForCurated(decision), decision.deathDepth());
         }
+    }
+
+    private static Origin originForCurated(TriggerPolicy.Decision decision) {
+        return TriggerPolicy.CURATED_BY_DESIGN.equals(decision.reason())
+                ? Origin.CURATED : Origin.DEFAULT;
     }
 
     private void predictable(TriggerContext ctx, StoryMemory story, TriggerPolicy.Decision decision, long postVersion) {

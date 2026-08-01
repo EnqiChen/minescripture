@@ -34,7 +34,8 @@ public final class EventSpecs {
                     parseOnce(JsonUtil.str(e, "once", "none")),
                     "world".equalsIgnoreCase(JsonUtil.str(e, "scope", "player"))
                             ? EventSpec.Scope.WORLD : EventSpec.Scope.PLAYER,
-                    JsonUtil.bool(e, "levity", false)
+                    JsonUtil.bool(e, "levity", false),
+                    JsonUtil.bool(e, "ai", true)
             ));
         }
         return new EventSpecs(out);

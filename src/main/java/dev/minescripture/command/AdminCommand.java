@@ -155,6 +155,10 @@ public final class AdminCommand implements TabExecutor {
             if (interp.reasoning() != null && !interp.reasoning().isBlank()) {
                 sender.sendMessage(line("  its reasoning: ", interp.reasoning()));
             }
+        } else if (last.origin() == TriggerService.Origin.CURATED) {
+            sender.sendMessage(line("Source: ", "curated by design — the AI was not asked. "
+                    + "A first arrival has no session story to interpret, and this greeting is "
+                    + "scripted so its verse explains the word it uses."));
         } else {
             sender.sendMessage(line("Source: ", "curated fallback ["
                     + last.origin() + "] — Gloo was unavailable or timed out"));

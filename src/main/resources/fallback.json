@@ -69,10 +69,9 @@
   ],
   "event_defaults": {
     "first_join": {
-      "refs": ["PSA.119.19", "PSA.84.5", "HEB.13.14", "JER.29.11", "JOS.1.9", "PSA.121.7-8"],
+      "refs": ["PSA.119.19"],
       "frame": "Welcome, Sojourner.",
       "title": "Welcome, {Sojourner}",
-      "ai_note": "The greeting displayed with this verse addresses the player as \"Sojourner\". Recommend Scripture about being a sojourner, stranger, exile or pilgrim on the earth, so the verse explains the word the greeting chose. A player who has just arrived has no history yet, so read the arrival itself rather than a story.",
       "interpretation": { "resonance": "beginnings", "emotional_arc": "arrival", "emphasis": "hope", "tone": "warm" }
     },
     "rejoin": {

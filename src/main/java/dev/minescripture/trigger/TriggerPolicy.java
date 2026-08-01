@@ -35,6 +35,9 @@ public final class TriggerPolicy {
 
     static final String DEATH = "player_death";
 
+    /** Not "the AI failed" — "the AI was never asked, and that is the design." */
+    public static final String CURATED_BY_DESIGN = "curated_by_design";
+
     private final EventSpecs specs;
     private final MineScriptureConfig config;
     private final AiBudgetGuard budget;
@@ -133,6 +136,15 @@ public final class TriggerPolicy {
             deathCluster.put(player, deathDepth + 1);
         }
 
+        // Some moments are scripted rather than interpreted. A first arrival has
+        // no session story by definition — nothing happened yet — so a model can
+        // only guess from an event name, and it guessed a verse about creation,
+        // then one urging the player to abstain from sinful desires. The welcome
+        // says what it means to say, and its verse is chosen to explain the word
+        // it uses. This is the exception; everything with a story still asks.
+        if (!spec.aiEligible()) {
+            return new Decision(true, false, CURATED_BY_DESIGN, deathDepth);
+        }
         if (!budget.tryAcquire(player, spec.priority(), now)) {
             return new Decision(true, false, "budget", deathDepth);
         }

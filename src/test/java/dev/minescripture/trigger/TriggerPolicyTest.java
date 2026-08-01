@@ -11,6 +11,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -224,10 +225,10 @@ class TriggerPolicyTest {
     void aMomentAfterAnEarlierInterpretationStillGetsItsOwnReading() {
         MineScriptureConfig cfg = MineScriptureConfig.builder().globalCooldownSeconds(0).build();
         TriggerPolicy policy = policy(realSpecs(), cfg);
-        assertTrue(policy.evaluate(ctx("first_join", 0), false, false).useAi());
+        assertTrue(policy.evaluate(ctx("first_nightfall", 0), false, false).useAi());
         TriggerPolicy.Decision death = policy.evaluate(ctx("player_death", 100_000L), false, false);
         assertTrue(death.present());
-        assertTrue(death.useAi(), "a death after a welcome must reach the AI");
+        assertTrue(death.useAi(), "a death after an earlier reading must reach the AI");
     }
 
     @Test
@@ -248,5 +249,25 @@ class TriggerPolicyTest {
         policy.markLevity(P1, 0);
         assertFalse(policy.levityAllowed(P1, 300_000L));
         assertTrue(policy.levityAllowed(P1, 600_000L));
+    }
+
+    /**
+     * A first arrival has no session story — nothing has happened yet. Asked to
+     * interpret it, the model guessed Genesis 1:1, then 1 Peter 2:11, whose second
+     * clause urges a brand-new player to abstain from sinful desires. The welcome
+     * is scripted instead, and the decision says which kind of curated it is so no
+     * reader can mistake a design choice for an outage.
+     */
+    @Test
+    void aFirstArrivalIsScriptedRatherThanInterpreted() {
+        MineScriptureConfig cfg = MineScriptureConfig.builder().globalCooldownSeconds(0).build();
+        TriggerPolicy policy = policy(realSpecs(), cfg);
+        TriggerPolicy.Decision welcome = policy.evaluate(ctx("first_join", 0), false, false);
+        assertTrue(welcome.present(), "it still shows — it simply is not interpreted");
+        assertFalse(welcome.useAi());
+        assertEquals(TriggerPolicy.CURATED_BY_DESIGN, welcome.reason());
+        assertNotEquals("budget", welcome.reason(), "not an outage, and must never read as one");
+        // Everything with a story to read still asks.
+        assertTrue(policy.evaluate(ctx("player_death", 200_000L), false, false).useAi());
     }
 }
